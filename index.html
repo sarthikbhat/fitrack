@@ -557,6 +557,14 @@ nav.tabs .inner{grid-template-columns:repeat(5,1fr)}
 .tgtlbl{font-size:12px;color:var(--dim);font-weight:600}
 body.locked{overflow:hidden}
 
+/* youtube icon beside the exercise name in the how-to modal */
+.capname{display:flex;align-items:center;gap:12px}
+.capname h3{flex:1;min-width:0}
+.ytbtn{flex-shrink:0;width:40px;height:40px;border-radius:50%;background:rgba(8,10,15,.5);border:1px solid rgba(255,255,255,.2);
+  display:flex;align-items:center;justify-content:center;color:#FF4A4A;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  transition:transform .15s,background .2s,color .2s}
+.ytbtn:hover{background:rgba(255,74,74,.22);color:#FF6B6B;transform:scale(1.08)}
+
 </style></head>
 <body><div id="app"></div>
 <script>
@@ -1600,7 +1608,8 @@ const IC = {
   down: '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>',
   timer: '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/></svg>',
   flame: '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" stroke="none"><path d="M12 2c1 3-1 4-2 6-1 2 .5 3 .5 3s-2-.5-2.5-2c-1 1.5-1.5 3-1.5 4a5.5 5.5 0 0 0 11 0c0-3-2-5-3-7-1.2-2.4-1-4-2-4z"/></svg>',
-  library: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>'
+  library: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+  youtube: '<svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor" stroke="none"><path d="M23 12s0-3.3-.42-4.9a2.5 2.5 0 0 0-1.77-1.77C19.2 5 12 5 12 5s-7.2 0-8.81.33A2.5 2.5 0 0 0 1.42 7.1C1 8.7 1 12 1 12s0 3.3.42 4.9a2.5 2.5 0 0 0 1.77 1.77C4.8 19 12 19 12 19s7.2 0 8.81-.33a2.5 2.5 0 0 0 1.77-1.77C23 15.3 23 12 23 12zM10 15.5v-7l6 3.5-6 3.5z"/></svg>'
 };
 
 /* ---- ring ---- */
@@ -1810,12 +1819,6 @@ function renderNutrition() {
     ${meals}
     ${editing ? `<button class="btn ghost addex" data-act="mealAdd" style="width:100%;margin:8px 0 12px">+ Add meal</button>` : ''}
   </section>
-  <div class="section-h"><h2>Targets</h2>${S.targetOverride ? '<span class="sub">personalised</span>' : ''}</div>
-  <section class="panel" style="padding:14px 16px">
-    <p class="shint" style="margin:0 0 11px">${S.targetOverride ? 'Calculated from your stats (Mifflin-St Jeor TDEE). ' : 'Using the plan default. '}Set age & activity in Settings, then recalculate.</p>
-    <button class="btn" style="width:100%" data-act="calcTarget">Recalculate my target</button>
-    ${S.targetOverride ? '<button class="btn ghost" style="width:100%;margin-top:8px" data-act="clearTarget">Reset to plan default</button>' : ''}
-  </section>
   <div class="section-h"><h2>Rules that hold the plan</h2></div>
   <section class="panel" style="padding:8px 16px"><ul class="list">${RULES.map(r => `<li>${esc(r)}</li>`).join('')}</ul></section>`;
 }
@@ -1992,18 +1995,19 @@ function renderModal() {
   if (steps) body = `<ol class="steps">${steps.map(s => `<li>${esc(s)}</li>`).join('')}</ol>`;
   else if (!EXDB && !x.done && !gif) body = '<div class="loading-steps">Loading technique guide…</div>';
   else body = `<div class="loading-steps">No step-by-step guide found in the open databases. Focus on: controlled tempo, full range of motion, and bracing your core throughout the movement.</div>`;
-  const yt = `<a class="btn ghost yt" href="https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' proper form technique')}" target="_blank" rel="noopener">${IC.play}&nbsp; Watch on YouTube</a>`;
+  const yt = `<a class="ytbtn" href="https://www.youtube.com/results?search_query=${encodeURIComponent(name + ' proper form technique')}" target="_blank" rel="noopener" aria-label="Watch on YouTube">${IC.youtube}</a>`;
   host.innerHTML = `<div class="overlay" data-act="backdrop">
     <div class="modal" role="dialog" aria-modal="true">
       <button class="close" data-act="closeModal" aria-label="close">${IC.close}</button>
       <div class="hero kb">${heroImg}${(gif || e) ? '' : noimg}<div class="grad"></div>
-        <div class="cap"><div class="eyebrow upper" style="color:${col}">${esc(mus)}</div><h3 class="cond">${esc(name)}</h3></div>
+        <div class="cap"><div class="eyebrow upper" style="color:${col}">${esc(mus)}</div>
+          <div class="capname"><h3 class="cond">${esc(name)}</h3>${yt}</div>
+        </div>
       </div>
       <div class="content">
         ${meta.length ? `<div class="metarow">${meta.map(m => `<span class="chip">${esc(m)}</span>`).join('')}</div>` : ''}
         ${records}
         ${body}
-        ${yt}
       </div>
     </div></div>`;
   if (reopen) host.querySelectorAll('.overlay,.modal').forEach(x => x.classList.add('noanim'));
