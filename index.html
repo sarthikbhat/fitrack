@@ -12,7 +12,10 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://images.weserv.nl">
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Sora:wght@400;500;600;700&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<noscript><link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet"></noscript>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -1483,11 +1486,16 @@ function initials(name) {
   return name.replace(/\(.*?\)/g, '').trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
 }
 function chip(ex) { const c = mc(ex.muscle); return `<span class="chip mg" style="background:${withA(c, .16)};color:${c}">${ex.muscle}</span>`; }
+/* Resize + re-encode exercise images through a free image CDN (weserv.nl):
+   the source JPGs are ~850px/~90KB but render into 44–90px thumbs, so we pull
+   width-capped WebP instead — ~95% smaller, modern format. Falls back to the
+   coloured monogram if the CDN or image is unavailable. */
+const cdnImg = (src, w) => 'https://images.weserv.nl/?url=' + encodeURIComponent(src) + '&w=' + w + '&output=webp&q=72&we';
 /* static single-frame thumbnail (used in cards, program, warm-up/cool-down).
    The animated two-frame loop lives only in the how-to modal. */
 function framesHTML(e, name) {
   if (!e) return '';
-  return `<img class="fr fr0" src="${e.imgs[0]}" alt="${esc(name || '')}" loading="lazy" onerror="this.remove()">`;
+  return `<img class="fr fr0" src="${cdnImg(e.imgs[0], 150)}" alt="${esc(name || '')}" loading="lazy" onerror="this.remove()">`;
 }
 function thumbHTML(ex, how, small) {
   const e = getEx(ex.name), col = mc(ex.muscle);
@@ -1847,8 +1855,8 @@ function renderModal() {
   if (e) {
     const im = e.imgs;
     heroImg = im.length > 1
-      ? `<img class="fr fr0" src="${im[0]}" alt="${esc(name)}" onerror="this.remove()"><img class="fr fr1" src="${im[1]}" alt="" onerror="this.style.display='none'"><span class="demo">${IC.play} Motion</span>`
-      : `<img class="fr fr0" src="${im[0]}" alt="${esc(name)}" onerror="this.remove()">`;
+      ? `<img class="fr fr0" src="${cdnImg(im[0], 680)}" alt="${esc(name)}" onerror="this.remove()"><img class="fr fr1" src="${cdnImg(im[1], 680)}" alt="" onerror="this.style.display='none'"><span class="demo">${IC.play} Motion</span>`
+      : `<img class="fr fr0" src="${cdnImg(im[0], 680)}" alt="${esc(name)}" onerror="this.remove()">`;
   }
   const noimg = `<div class="noimg"><span class="ph" style="--phc:${col};font-size:44px">${initials(name)}</span></div>`;
   const meta = e ? [e.eq && cap(e.eq), e.lv && cap(e.lv), ...(e.pm || []).map(cap)].filter(Boolean) : [];

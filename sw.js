@@ -34,7 +34,7 @@ self.addEventListener('fetch', e => {
       return fetch(req).then(r => {
         try {
           if (r && r.ok) {
-            const cache = url.origin === location.origin || /githubusercontent|gstatic|googleapis/.test(url.hostname);
+            const cache = url.origin === location.origin || /githubusercontent|gstatic|googleapis|weserv/.test(url.hostname);
             if (cache) { const cp = r.clone(); caches.open(CACHE).then(c => c.put(req, cp)); }
           }
         } catch (x) {}
