@@ -1,0 +1,14 @@
+{
+  "name": "Fitrack",
+  "short_name": "Fitrack",
+  "description": "Local-first futuristic fitness tracker",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#080A0F",
+  "theme_color": "#080A0F",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
