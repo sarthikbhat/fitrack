@@ -551,6 +551,12 @@ nav.tabs .inner{grid-template-columns:repeat(5,1fr)}
 .sheetbody .flbl:first-child{margin-top:2px}
 .sheetbody .notes{min-height:62px;margin:0}
 
+/* re-render without replaying the open animation */
+.overlay.noanim,.modal.noanim{animation:none!important}
+.tgtrow{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 2px 2px;flex-wrap:wrap}
+.tgtlbl{font-size:12px;color:var(--dim);font-weight:600}
+body.locked{overflow:hidden}
+
 </style></head>
 <body><div id="app"></div>
 <script>
@@ -1384,7 +1390,7 @@ function getEx(name) {
   return (EX_CACHE[name] = best);
 }
 function exLoad() {
-  try { const c = localStorage.getItem(EXDB_KEY); if (c) { exProcess(JSON.parse(c)); return; } } catch (e) {}
+  try { const c = localStorage.getItem(EXDB_KEY); if (c) { exProcess(JSON.parse(c)); render(); return; } } catch (e) {}
   fetch(EXDB_URL).then(r => r.json()).then(list => {
     const raw = list.filter(e => e.images && e.images.length).map(e => ({
       n: e.name,
@@ -1429,9 +1435,10 @@ function loadXDB(name) {
       const b = pickXDB(name, list);
       XDB[name] = b ? { gif: b.gifUrl || '', ins: b.instructions || [], target: b.target || '', eq: b.equipment || '', done: true } : { done: true };
       persistXDB();
-      if (S.modal === name) renderModal();
+      const v = XDB[name];
+      if (S.modal === name && (v.gif || (v.ins && v.ins.length) || v.target)) renderModal();   // only re-render if we actually got something
     })
-    .catch(() => { XDB[name] = { done: true, transient: true }; if (S.modal === name) renderModal(); });
+    .catch(() => { XDB[name] = { done: true, transient: true }; });
 }
 
 /* ---- store (versioned, with corruption-recovery backup) ---- */
@@ -1561,18 +1568,18 @@ function chip(ex) { const c = mc(ex.muscle); return `<span class="chip mg" style
    the source JPGs are ~850px/~90KB but render into 44–90px thumbs, so we pull
    width-capped WebP instead — ~95% smaller, modern format. Falls back to the
    coloured monogram if the CDN or image is unavailable. */
-const cdnImg = (src, w) => 'https://images.weserv.nl/?url=' + encodeURIComponent(src) + '&w=' + w + '&output=webp&q=72&we';
+const cdnImg = (src, w, q) => 'https://images.weserv.nl/?url=' + encodeURIComponent(src) + '&w=' + w + '&output=webp&q=' + (q || 82) + '&we';
 /* static single-frame thumbnail (used in cards, program, warm-up/cool-down).
-   The animated two-frame loop lives only in the how-to modal. */
-function framesHTML(e, name) {
+   The animated two-frame loop lives only in the how-to modal. w scales to context. */
+function framesHTML(e, name, w) {
   if (!e) return '';
-  return `<img class="fr fr0" src="${cdnImg(e.imgs[0], 150)}" alt="${esc(name || '')}" loading="lazy" onerror="this.remove()">`;
+  return `<img class="fr fr0" src="${cdnImg(e.imgs[0], w || 220)}" alt="${esc(name || '')}" loading="lazy" onerror="this.remove()">`;
 }
-function thumbHTML(ex, how, small) {
+function thumbHTML(ex, how, small, w) {
   const e = getEx(ex.name), col = mc(ex.muscle);
   const ph = `<span class="ph" style="--phc:${col}">${initials(ex.name)}</span>`;
   const act = how ? ` data-act="how" data-ex="${esc(ex.name)}" role="button" tabindex="0" aria-label="How to do ${esc(ex.name)}"` : '';
-  return `<div class="thumb${small ? ' sm' : ''}${how ? ' tap' : ''}${EXDB ? '' : ' loading'}"${act}>${ph}${framesHTML(e, ex.name)}</div>`;
+  return `<div class="thumb${small ? ' sm' : ''}${how ? ' tap' : ''}${EXDB ? '' : ' loading'}"${act}>${ph}${framesHTML(e, ex.name, w)}</div>`;
 }
 
 /* ---- icons ---- */
@@ -1788,6 +1795,10 @@ function renderNutrition() {
   </div>`).join('');
   return `<div class="section-h"><h2>Fuel</h2><button class="btn sm ghost" data-act="nutEditToggle">${editing ? 'Done' : 'Edit meals'}</button></div>
   <div class="macros">${macros}</div>
+  <div class="tgtrow">
+    <span class="tgtlbl">${S.targetOverride ? 'Personalised target · Mifflin-St Jeor' : 'Plan default target'}</span>
+    <span style="display:flex;gap:6px"><button class="btn sm" data-act="calcTarget">Recalculate</button>${S.targetOverride ? '<button class="btn sm ghost" data-act="clearTarget">Reset</button>' : ''}</span>
+  </div>
   <div class="dayscroll">${pills}</div>
   <div class="daytot">
     <div class="dt-row"><span class="cond" style="font-weight:600">Eaten ${S.nutDay === (new Date().getDay() + 6) % 7 ? 'today' : esc(d.day)}</span><span class="cond tnum" style="color:var(--go)">${eKcal} / ${T.kcal} kcal · ${eP}g P</span></div>
@@ -1946,10 +1957,14 @@ function renderProgress() {
 }
 
 /* ===================================================== modal ============= */
+let _lastModal = null, _lastSheet = null;
+function lockScroll() { document.body.classList.toggle('locked', !!(S.modal || S.picker != null || S.sheet)); }
 function renderModal() {
+  lockScroll();
   const host = el('modalHost');
-  if (!S.modal) { host.innerHTML = ''; return; }
+  if (!S.modal) { host.innerHTML = ''; _lastModal = null; return; }
   const name = S.modal;
+  const reopen = _lastModal === name; _lastModal = name;
   let mus = ''; PLAN.forEach(d => d.ex.forEach(e => { if (e.name === name) mus = e.muscle; }));
   if (!mus) { const l = LIBRARY.find(x => x.name === name); if (l) mus = l.muscle; }
   const e = getEx(name), col = mc(mus);
@@ -1961,8 +1976,8 @@ function renderModal() {
   } else if (e) {
     const im = e.imgs;
     heroImg = im.length > 1
-      ? `<img class="fr fr0" src="${cdnImg(im[0], 680)}" alt="${esc(name)}" onerror="this.remove()"><img class="fr fr1" src="${cdnImg(im[1], 680)}" alt="" onerror="this.style.display='none'"><span class="demo">${IC.play} Motion</span>`
-      : `<img class="fr fr0" src="${cdnImg(im[0], 680)}" alt="${esc(name)}" onerror="this.remove()">`;
+      ? `<img class="fr fr0" src="${cdnImg(im[0], 800)}" alt="${esc(name)}" onerror="this.remove()"><img class="fr fr1" src="${cdnImg(im[1], 800)}" alt="" onerror="this.style.display='none'"><span class="demo">${IC.play} Motion</span>`
+      : `<img class="fr fr0" src="${cdnImg(im[0], 800)}" alt="${esc(name)}" onerror="this.remove()">`;
   }
   const noimg = `<div class="noimg"><span class="ph" style="--phc:${col};font-size:44px">${initials(name)}</span></div>`;
   const meta = (e ? [e.eq && cap(e.eq), e.lv && cap(e.lv), ...(e.pm || []).map(cap)] : [x.eq && cap(x.eq), x.target && cap(x.target)]).filter(Boolean);
@@ -1991,7 +2006,8 @@ function renderModal() {
         ${yt}
       </div>
     </div></div>`;
-  const cb = host.querySelector('.close'); if (cb) cb.focus();
+  if (reopen) host.querySelectorAll('.overlay,.modal').forEach(x => x.classList.add('noanim'));
+  else { const cb = host.querySelector('.close'); if (cb) cb.focus(); }
 }
 
 /* ===================================================== exercise picker == */
@@ -2019,6 +2035,7 @@ function pickBodyHTML(day) {
   return custom + (rows || (custom ? '' : '<div class="empty">No matches. Type a name to add it as a custom exercise.</div>'));
 }
 function renderPicker() {
+  lockScroll();
   const host = el('pickerHost');
   if (S.picker == null) { host.innerHTML = ''; return; }
   const day = dayById(S.picker); if (!day) { host.innerHTML = ''; return; }
@@ -2044,7 +2061,7 @@ function libGridHTML() {
   const q = (S.libQuery || '').toLowerCase().trim(), f = S.libFilter || 'All';
   const items = LIBRARY.filter(e => (f === 'All' || e.muscle === f) && (!q || e.name.toLowerCase().includes(q)));
   return items.length ? items.map(e => `<button class="libcard" data-act="how" data-ex="${esc(e.name)}">
-      ${thumbHTML(e)}
+      ${thumbHTML(e, false, false, 480)}
       <div class="libnm">${esc(e.name)}</div>${chip(e)}
     </button>`).join('') : '<div class="empty">No matches.</div>';
 }
@@ -2353,10 +2370,12 @@ function mealFormHTML() {
 }
 /* ---- settings sheet ---- */
 function renderSheet() {
+  lockScroll();
   const host = el('sheetHost'); if (!host) return;
-  if (!S.sheet) { host.innerHTML = ''; return; }
-  if (S.sheet === 'switch') { host.innerHTML = switchSheetHTML(); return; }
-  if (S.sheet === 'meal') { host.innerHTML = mealFormHTML(); const i = host.querySelector('#mf_time'); if (i) i.focus(); return; }
+  if (!S.sheet) { host.innerHTML = ''; _lastSheet = null; return; }
+  const reopen = _lastSheet === S.sheet; _lastSheet = S.sheet;
+  if (S.sheet === 'switch') { host.innerHTML = switchSheetHTML(); if (reopen) host.querySelectorAll('.overlay,.modal').forEach(x => x.classList.add('noanim')); return; }
+  if (S.sheet === 'meal') { host.innerHTML = mealFormHTML(); if (reopen) host.querySelectorAll('.overlay,.modal').forEach(x => x.classList.add('noanim')); else { const i = host.querySelector('#mf_time'); if (i) i.focus(); } return; }
   const seg = (act, cur, opts) => `<div class="seg">${opts.map(o => `<button class="segb${cur === o.v ? ' on' : ''}" data-act="${act}" data-v="${o.v}">${o.l}</button>`).join('')}</div>`;
   host.innerHTML = `<div class="overlay" data-act="sheetBackdrop">
     <div class="modal sheet" role="dialog" aria-modal="true">
@@ -2384,6 +2403,7 @@ function renderSheet() {
         <p class="shint">Data lives only on this device (localStorage) with an automatic backup copy. Export now and then to be safe.</p>
       </div>
     </div></div>`;
+  if (reopen) host.querySelectorAll('.overlay,.modal').forEach(x => x.classList.add('noanim'));
 }
 
 /* ---- service worker (offline / installable when served over https) ---- */
