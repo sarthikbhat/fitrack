@@ -1596,7 +1596,8 @@ function renderTrain() {
   let total = 0, done = 0;
   exs.forEach(e => { const a = logFor(date, e); total += a.length; done += a.filter(s => s.done).length; });
   const pct = total ? done / total * 100 : 0;
-  const hue = withA(mc((exs[0] || plan.ex[0]).muscle), .22);
+  const first = exs[0] || plan.ex[0];
+  const hue = withA(mc(first ? first.muscle : 'Chest'), .22);
   return `<section class="panel today" style="--dayhue:${hue}">
     <div class="row1">
       <div style="min-width:0">
@@ -1614,7 +1615,7 @@ function renderTrain() {
   <section class="panel" style="padding:6px 16px">${cueList(WARMUP)}</section>
 
   <div class="section-h"><h2>Session</h2><span class="sub" id="sessCount">${done}/${total} sets</span></div>
-  <div class="exlist">${exs.map(e => exCard(date, e, plan)).join('')}</div>
+  <div class="exlist">${exs.length ? exs.map(e => exCard(date, e, plan)).join('') : '<div class="empty">No exercises yet — add some below to start logging.</div>'}</div>
   <button class="btn ghost addex" data-act="openPicker" data-day="${plan.id}" style="width:100%;margin-top:10px">+ Add exercise</button>
 
   <div class="section-h"><h2>Notes</h2><span class="sub">today</span></div>
