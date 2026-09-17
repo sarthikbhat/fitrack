@@ -402,6 +402,11 @@ button{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 #modalHost .overlay{z-index:70}
 #pickerHost .overlay{z-index:55}
 
+/* ---- nutrition day total ---- */
+.daytot{background:var(--panel);border:1px solid var(--line);border-radius:var(--rs);padding:12px 14px;margin-bottom:10px}
+.dt-row{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px}
+.daytot .pbar{margin:9px 0 4px}
+
 </style></head>
 <body><div id="app"></div>
 <script>
@@ -1258,6 +1263,7 @@ let S = load();
 S.tab = S.tab || 'train';
 if (S.bw == null) S.bw = ATHLETE.startKg;
 S.bwLog = S.bwLog || [];
+if (!S.bwLog.length) S.bwLog.push({ d: todayISO(), kg: S.bw });   // seed so the trend is never empty
 S.logged = S.logged || {};
 S.grocery = S.grocery || {};
 S.history = S.history || [];
@@ -1274,6 +1280,9 @@ S.pickFilter = 'All';
 S.pickQuery = '';
 if (S.nutDay == null) S.nutDay = (new Date().getDay() + 6) % 7;
 const persist = () => { try { S.modal = null; localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} };
+let _saveTimer = null;
+const persistSoon = () => { if (_saveTimer) clearTimeout(_saveTimer); _saveTimer = setTimeout(persist, 400); };
+const buzz = ms => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
 
 function planForToday() { const d = (new Date().getDay() + 6) % 7; return d < 6 ? PLAN[d] : null; }
 /* effective exercise list for a day = base plan minus removed, plus user-added */
@@ -1303,15 +1312,15 @@ function initials(name) {
 function chip(ex) { const c = mc(ex.muscle); return `<span class="chip mg" style="background:${withA(c, .16)};color:${c}">${ex.muscle}</span>`; }
 /* static single-frame thumbnail (used in cards, program, warm-up/cool-down).
    The animated two-frame loop lives only in the how-to modal. */
-function framesHTML(e) {
+function framesHTML(e, name) {
   if (!e) return '';
-  return `<img class="fr fr0" src="${e.imgs[0]}" alt="" loading="lazy" onerror="this.remove()">`;
+  return `<img class="fr fr0" src="${e.imgs[0]}" alt="${esc(name || '')}" loading="lazy" onerror="this.remove()">`;
 }
 function thumbHTML(ex, how, small) {
   const e = getEx(ex.name), col = mc(ex.muscle);
   const ph = `<span class="ph" style="--phc:${col}">${initials(ex.name)}</span>`;
   const act = how ? ` data-act="how" data-ex="${esc(ex.name)}" role="button" tabindex="0" aria-label="How to do ${esc(ex.name)}"` : '';
-  return `<div class="thumb${small ? ' sm' : ''}${how ? ' tap' : ''}${EXDB ? '' : ' loading'}"${act}>${ph}${framesHTML(e)}</div>`;
+  return `<div class="thumb${small ? ' sm' : ''}${how ? ' tap' : ''}${EXDB ? '' : ' loading'}"${act}>${ph}${framesHTML(e, ex.name)}</div>`;
 }
 
 /* ---- icons ---- */
@@ -1432,7 +1441,7 @@ function miniEx(ex, day) {
 function cueRow(line) {
   const nm = line.split(/[—–-]|\(/)[0].trim();
   const e = getEx(nm);
-  const media = e ? `<div class="thumb sm">${framesHTML(e)}</div>` : '<span class="cuedot"></span>';
+  const media = e ? `<div class="thumb sm">${framesHTML(e, nm)}</div>` : '<span class="cuedot"></span>';
   return `<div class="cue">${media}<div class="ct">${esc(line)}</div></div>`;
 }
 function cueList(arr) { return `<div class="cues">${arr.map(cueRow).join('')}</div>`; }
@@ -1440,7 +1449,9 @@ function renderProgram() {
   const tIdx = (new Date().getDay() + 6) % 7;
   return `<div class="section-h"><h2>The Split</h2><span class="sub">Push · Pull · Legs ×2</span></div>
   <div class="days">${PLAN.map((d, i) => {
-    const open = !!S.openDay[i], today = i === tIdx, col = mc(d.ex[0].muscle);
+    const today = i === tIdx;
+    const open = S.openDay[i] != null ? !!S.openDay[i] : today;   // today opens by default
+    const col = mc(d.ex[0].muscle);
     return `<div class="day${open ? ' open' : ''}">
       <div class="dh" data-act="togDay" data-i="${i}">
         <div class="idx cond" style="color:${col};border-color:${withA(col, .5)};background:${withA(col, .1)}">${i + 1}</div>
@@ -1461,6 +1472,10 @@ function renderProgram() {
 /* ===================================================== render: NUTRITION == */
 function renderNutrition() {
   const d = MEALS[S.nutDay];
+  const totKcal = d.meals.reduce((a, m) => a + (m.kcal || 0), 0);
+  const totP = d.meals.reduce((a, m) => a + (m.p || 0), 0);
+  const kpct = Math.min(100, Math.round(totKcal / TARGETS.kcal * 100));
+  const diff = totKcal - TARGETS.kcal;
   const pills = MEALS.map((m, i) => `<button class="dpill${i === S.nutDay ? ' on' : ''}" data-act="nutDay" data-i="${i}">${m.day}</button>`).join('');
   const macros = [['kcal', TARGETS.kcal], ['protein', TARGETS.protein + 'g'], ['carbs', TARGETS.carbs + 'g'], ['fat', TARGETS.fat + 'g']]
     .map(([k, v]) => `<div class="macro"><b class="cond">${v}</b><span>${k}</span></div>`).join('');
@@ -1472,6 +1487,11 @@ function renderNutrition() {
   return `<div class="section-h"><h2>Fuel</h2><span class="sub">daily targets</span></div>
   <div class="macros">${macros}</div>
   <div class="dayscroll">${pills}</div>
+  <div class="daytot">
+    <div class="dt-row"><span class="cond" style="font-weight:600">${esc(d.full)} planned</span><span class="cond tnum" style="color:var(--accent)">${totKcal} kcal · ${totP}g P</span></div>
+    <div class="pbar"><i style="width:${kpct}%"></i></div>
+    <div class="dt-row" style="font-size:11px;color:var(--dim);margin-top:2px"><span>target ${TARGETS.kcal} kcal</span><span>${diff >= 0 ? '+' : ''}${diff} kcal vs target</span></div>
+  </div>
   <section class="panel" style="padding:4px 16px">
     <div style="padding:12px 0 4px;font-size:12px;color:var(--dim)" class="upper">${esc(d.full)} · ${esc(d.train)}</div>
     ${meals}
@@ -1482,7 +1502,8 @@ function renderNutrition() {
 
 /* ===================================================== render: PROGRESS === */
 function sparkline(pts) {
-  if (pts.length < 2) return '<div class="empty" style="padding:14px">Log your weight over time to see the trend.</div>';
+  if (!pts.length) return '<div class="empty" style="padding:14px">Log your weight over time to see the trend.</div>';
+  if (pts.length === 1) pts = [pts[0], pts[0]];   // single reading → flat baseline
   const w = 320, h = 70, pad = 6;
   const xs = pts.map(p => p.kg);
   let mn = Math.min(...xs), mx = Math.max(...xs); if (mn === mx) { mn -= 1; mx += 1; }
@@ -1555,7 +1576,7 @@ function renderProgress() {
     </div>
   </section>
 
-  <div class="section-h"><h2>Session log</h2>${hist.length ? '<span class="sub">swipe-free · tap ✕ to remove</span>' : ''}</div>
+  <div class="section-h"><h2>Session log</h2>${hist.length ? '<span class="sub">tap 🗑 to delete</span>' : ''}</div>
   <section class="panel" style="padding:6px 16px">
     ${hist.length ? hist.map((h, i) => `<div class="histrow">
       <div class="hd" style="color:var(--accent)">${esc(h.dateShort)}</div>
@@ -1587,8 +1608,8 @@ function renderModal() {
   if (e) {
     const im = e.imgs;
     heroImg = im.length > 1
-      ? `<img class="fr fr0" src="${im[0]}" alt="" onerror="this.remove()"><img class="fr fr1" src="${im[1]}" alt="" onerror="this.style.display='none'"><span class="demo">${IC.play} Motion</span>`
-      : `<img class="fr fr0" src="${im[0]}" alt="" onerror="this.remove()">`;
+      ? `<img class="fr fr0" src="${im[0]}" alt="${esc(name)}" onerror="this.remove()"><img class="fr fr1" src="${im[1]}" alt="" onerror="this.style.display='none'"><span class="demo">${IC.play} Motion</span>`
+      : `<img class="fr fr0" src="${im[0]}" alt="${esc(name)}" onerror="this.remove()">`;
   }
   const noimg = `<div class="noimg"><span class="ph" style="--phc:${col};font-size:44px">${initials(name)}</span></div>`;
   const meta = e ? [e.eq && cap(e.eq), e.lv && cap(e.lv), ...(e.pm || []).map(cap)].filter(Boolean) : [];
@@ -1607,6 +1628,7 @@ function renderModal() {
         ${body}
       </div>
     </div></div>`;
+  const cb = host.querySelector('.close'); if (cb) cb.focus();
 }
 
 /* ===================================================== exercise picker == */
@@ -1719,6 +1741,8 @@ document.addEventListener('click', e => {
     const dayId = t.dataset.day, name = t.dataset.ex, day = PLAN.find(d => d.id === dayId);
     if (isAdded(day, name)) S.added[dayId] = (S.added[dayId] || []).filter(e => e.name !== name);
     else S.removed[dayId] = (S.removed[dayId] || []).concat([name]);
+    const dt = todayISO(), tp = planForToday();               // prune orphaned log data
+    if (tp && tp.id === dayId && S.logged[dt]) delete S.logged[dt][name];
     persist(); render();
   }
   else if (a === 'tick') {
@@ -1728,7 +1752,7 @@ document.addEventListener('click', e => {
     arr[i].done = !arr[i].done; persist();
     const row = t.closest('.setrow'); if (row) row.classList.toggle('done', arr[i].done);
     const card = t.closest('.ex'), wasComplete = card.classList.contains('done-all');
-    if (arr[i].done) { t.classList.remove('burst'); void t.offsetWidth; t.classList.add('burst'); }
+    if (arr[i].done) { buzz(14); t.classList.remove('burst'); void t.offsetWidth; t.classList.add('burst'); }
     updateExProgress(card, ex, date);
     if (!wasComplete && card.classList.contains('done-all')) { card.classList.remove('flash'); void card.offsetWidth; card.classList.add('flash'); }
     updateToday();
@@ -1743,12 +1767,28 @@ document.addEventListener('input', e => {
   const wk = c.dataset.w, rk = c.dataset.r, date = todayISO(), plan = planForToday(); if (!plan) return;
   const key = wk || rk; if (!key) return;
   const [nm, idx] = key.split('|'); const ex = dayExercises(plan).find(x => x.name === nm); if (!ex) return;
-  const arr = logFor(date, ex); if (wk) arr[+idx].w = c.value; else arr[+idx].r = c.value; persist();
+  const arr = logFor(date, ex); if (wk) arr[+idx].w = c.value; else arr[+idx].r = c.value; persistSoon();
 });
 document.addEventListener('change', e => {
   if (e.target.id === 'bwInput') setBw(parseFloat(e.target.value));
   else if (e.target.id === 'goalInput') setGoal(parseFloat(e.target.value));
   else if (e.target.id === 'heightInput') setHeight(parseFloat(e.target.value));
+});
+/* Escape closes the top overlay; Tab is trapped inside it */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    if (S.modal) { S.modal = null; renderModal(); return; }
+    if (S.picker != null) { S.picker = null; renderPicker(); render(true); return; }
+  }
+  if (e.key !== 'Tab') return;
+  const overlay = (S.modal ? el('modalHost').querySelector('.overlay') : null) || el('pickerHost').querySelector('.overlay');
+  if (!overlay) return;
+  const f = [...overlay.querySelectorAll('button, input, [tabindex]:not([tabindex="-1"])')].filter(x => !x.disabled && x.offsetParent !== null);
+  if (!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if (!overlay.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+  else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
 });
 
 function setBw(v) {
