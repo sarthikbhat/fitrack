@@ -45,7 +45,14 @@ export type FeedComment = {
   author: Profile | null;
 };
 
-export type PostInput = { type: ActivityType; data: SessionActivityData & Record<string, unknown> };
+export type PostInput = {
+  // Explicit row id. For session posts, pass the SessionSummary.id so the activity
+  // row === the session (lets us delete/replace it when the session is deleted or
+  // re-finished). Omit for other posts and a fresh id is generated.
+  id?: string;
+  type: ActivityType;
+  data: SessionActivityData & Record<string, unknown>;
+};
 export type PostResult = { ok: true; id: string } | { ok: false; error: string };
 export type CommentResult = { ok: true; comment: FeedComment } | { ok: false; error: string };
 export type SimpleResult = { ok: true } | { ok: false; error: string };
@@ -115,19 +122,47 @@ async function profilesByIds(
  * when signed-out/unconfigured, and a run-the-migration hint on the missing-table
  * error (42P01). Fire-and-forget callers can ignore the result.
  */
-export async function postActivity({ type, data }: PostInput): Promise<PostResult> {
+export async function postActivity({ id: explicitId, type, data }: PostInput): Promise<PostResult> {
   const sb = getSupabase();
   if (!sb) return { ok: false, error: SIGN_IN };
   const uid = await currentUserId(sb);
   if (!uid) return { ok: false, error: SIGN_IN };
 
-  const id = makeId();
-  const { error } = await sb.from("activity").insert({ id, user_id: uid, type, data });
+  const id = explicitId ?? makeId();
+  // When the caller supplies the id (session posts keyed by SessionSummary.id), also
+  // stash it in data for robustness, and upsert on id so re-finishing the same day
+  // replaces the existing post cleanly instead of erroring on the duplicate key.
+  const row = explicitId
+    ? { id, user_id: uid, type, data: { ...data, sessionId: id } }
+    : { id, user_id: uid, type, data };
+  const { error } = explicitId
+    ? await sb.from("activity").upsert(row, { onConflict: "id" })
+    : await sb.from("activity").insert(row);
   if (error) {
     if (error.code === "42P01") return { ok: false, error: MISSING_TABLE };
     return { ok: false, error: "Couldn't post your workout. Try again." };
   }
   return { ok: true, id };
+}
+
+/**
+ * Delete the feed activity linked to a session (its row id === the SessionSummary.id).
+ * Called fire-and-forget when a session is deleted so its post leaves the feed too.
+ * Cascade removes the row's likes/comments. Guards signed-out/unconfigured and
+ * ignores the missing-table error / absent rows silently.
+ */
+export async function deleteActivityForSession(sessionId: string): Promise<SimpleResult> {
+  const sb = getSupabase();
+  if (!sb) return { ok: false, error: SIGN_IN };
+  const uid = await currentUserId(sb);
+  if (!uid) return { ok: false, error: SIGN_IN };
+  if (!sessionId) return { ok: true };
+
+  const { error } = await sb.from("activity").delete().eq("id", sessionId).eq("user_id", uid);
+  if (error && error.code !== "42P01") {
+    return { ok: false, error: "Couldn't remove the feed post." };
+  }
+  return { ok: true };
 }
 
 /**

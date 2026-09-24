@@ -13,6 +13,7 @@ import type {
   Plan,
   Profile,
   Program,
+  SessionSummary,
   State,
   Units,
 } from "@/lib/types";
@@ -131,7 +132,7 @@ export type Store = State & {
   addSet: (date: string, exName: string, plannedSets: number) => void;
   delSet: (date: string, exName: string, i: number, plannedSets: number) => void;
   setNote: (date: string, text: string) => void;
-  finishSession: (date: string, dayName: string, exercises: PlanExercise[]) => void;
+  finishSession: (date: string, dayName: string, exercises: PlanExercise[]) => SessionSummary;
   discardDay: (date: string, exNames: string[]) => void;
   // Day-edit slices (mutate persisted added/removed/order; legacy picker handlers 2140-2173).
   addExerciseToDay: (dayId: string, item: { name: string; muscle: string }) => void;
@@ -253,12 +254,16 @@ export const useStore = create<Store>()(
           logged: withSets(s.logged, date, exName, plannedSets, (sets) => sets.filter((_, j) => j !== i)),
         })),
       setNote: (date, text) => set((s) => ({ notes: { ...s.notes, [date]: text } })),
-      finishSession: (date, dayName, exercises) =>
+      finishSession: (date, dayName, exercises) => {
+        // Build the summary once and return it so the caller (Train) can key the
+        // fire-and-forget feed post by the exact SessionSummary.id it stored.
+        const summary = sessionFromDay(get().logged, date, dayName, exercises);
         set((s) => {
-          const summary = sessionFromDay(s.logged, date, dayName, exercises);
           const rest = s.sessions.filter((h) => !(h.date === date && h.name === dayName));
           return { sessions: [summary, ...rest] };
-        }),
+        });
+        return summary;
+      },
       discardDay: (date, exNames) =>
         set((s) => {
           const day = { ...(s.logged[date] || {}) };

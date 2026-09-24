@@ -11,6 +11,8 @@ import { Heatmap } from "@/components/Heatmap";
 import { VolumeChart } from "@/components/VolumeChart";
 import { Icon } from "@/data/icons";
 import { useConfirm } from "@/components/ConfirmProvider";
+import { useAuth } from "@/lib/auth";
+import { deleteActivityForSession } from "@/lib/feed";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const shortDate = (iso: string) =>
@@ -27,6 +29,7 @@ export default function ProgressPage() {
   const setStartWeight = useStore((s) => s.setStartWeight);
   const setHeight = useStore((s) => s.setHeight);
   const deleteSession = useStore((s) => s.deleteSession);
+  const { status } = useAuth();
   const confirm = useConfirm();
 
   const u = massLabel(unit);
@@ -311,7 +314,12 @@ export default function ProgressPage() {
                     confirmLabel: "Delete",
                     danger: true,
                   });
-                  if (ok) deleteSession(h.id);
+                  if (ok) {
+                    deleteSession(h.id);
+                    // Remove the linked feed post too (activity id === session id).
+                    // Fire-and-forget, signed-in only; local delete already happened.
+                    if (status === "signed-in") deleteActivityForSession(h.id).catch(() => {});
+                  }
                 }}
                 aria-label="delete session"
               >

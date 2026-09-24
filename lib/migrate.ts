@@ -30,7 +30,7 @@ export function emptyState(): State {
     workouts: [],
     sessions: [],
     logged: {},
-    settings: { rest: 90, autoRest: true, shareWorkouts: false },
+    settings: { rest: 90, autoRest: true, shareWorkouts: true },
     notes: {},
     added: {},
     removed: {},
@@ -66,11 +66,11 @@ function reshape(s: Record<string, unknown>): State {
   s.diary = migrateDiary(s.diary);
   const plan = s.plan as Plan | undefined;
   if (!plan || typeof plan !== "object" || !Array.isArray(plan.meals)) s.plan = starterPlan();
-  // Passthrough for the opt-in feed toggle: older blobs carry a settings object
-  // without `shareWorkouts`, so default it to false (opt-in stays off on upgrade).
+  // Passthrough for the feed toggle: older blobs carry a settings object without
+  // `shareWorkouts`, so default it to true (sharing on by default).
   const settings = s.settings as Partial<State["settings"]> | undefined;
   if (settings && typeof settings === "object" && typeof settings.shareWorkouts !== "boolean") {
-    s.settings = { ...settings, shareWorkouts: false } as State["settings"];
+    s.settings = { ...settings, shareWorkouts: true } as State["settings"];
   }
   delete s.eaten;
   delete s.mealAdd;

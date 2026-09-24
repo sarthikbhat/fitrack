@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { useStore } from "@/lib/store";
 import { useRest } from "@/lib/rest";
 import { todayISO } from "@/lib/dates";
-import { plannedForToday, dayExercises, logFor, exDone, activeDays, sessionFromDay } from "@/lib/day";
+import { plannedForToday, dayExercises, logFor, exDone, activeDays } from "@/lib/day";
 import { useAuth } from "@/lib/auth";
 import { postActivity } from "@/lib/feed";
 import { lastEntry, exStats, type Logged } from "@/lib/exStats";
@@ -263,12 +263,13 @@ export default function TrainPage() {
   const hue = withA(mc(first ? first.muscle : "Chest"), 0.22);
 
   const onFinish = () => {
-    finishSession(date, plan.name, exs);
+    const summary = finishSession(date, plan.name, exs);
     // Opt-in feed post: fire-and-forget so it never blocks the UI or navigation,
     // and only when the user opted in AND is signed in. Errors are ignored silently.
+    // The activity id === the SessionSummary.id, so deleting the session removes it.
     if (settings.shareWorkouts && status === "signed-in") {
-      const summary = sessionFromDay(logged, date, plan.name, exs);
       void postActivity({
+        id: summary.id,
         type: "session",
         data: { name: plan.name, sets: summary.sets, vol: summary.vol, date },
       }).catch(() => {});
