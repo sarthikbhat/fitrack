@@ -1,6 +1,6 @@
 // Public profiles layer. Backs the visible account presence (avatar + display
 // name + @username) and the public profile page /u/<username>. Everything
-// degrades gracefully when Supabase is unconfigured — every function no-ops or
+// degrades gracefully when Supabase is unconfigured - every function no-ops or
 // returns null so the local-first app keeps working with no backend.
 import type { SupabaseClient, User } from "@supabase/supabase-js";
 import { getSupabase } from "@/lib/supabase";
@@ -162,15 +162,19 @@ export async function updateMyProfile(input: UpdateProfileInput): Promise<Update
   if (input.display_name !== undefined) patch.display_name = input.display_name.trim() || null;
   if (input.bio !== undefined) patch.bio = input.bio.trim() || null;
 
+  // Upsert (not update) so it succeeds even if the profiles row wasn't created on
+  // sign-in. Only the changed columns are sent, so a partial edit never clobbers
+  // other fields (e.g. editing bio won't wipe display_name/avatar).
   const { data, error } = await sb
     .from("profiles")
-    .update(patch)
-    .eq("id", auth.user.id)
+    .upsert({ id: auth.user.id, ...patch }, { onConflict: "id" })
     .select("*")
     .single();
 
   if (error) {
     if (isUniqueViolation(error)) return { ok: false, error: "That username is taken." };
+    if (error.code === "42P01")
+      return { ok: false, error: "Profiles table missing — run the 0002 SQL migration in Supabase." };
     return { ok: false, error: "Couldn't save your profile. Try again." };
   }
   return { ok: true, profile: data as Profile };

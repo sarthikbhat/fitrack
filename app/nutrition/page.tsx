@@ -14,14 +14,15 @@ import type { Food, LoggedMeal, MealItem, PlannedMeal } from "@/lib/types";
 import { Ring } from "@/components/exercise/Ring";
 import { Icon } from "@/data/icons";
 import { AddFoodSheet } from "@/components/nutrition/AddFoodSheet";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 // The add-food sheet targets a meal without writing to the store up-front: the
 // LoggedMeal is only created on the first actual add (see onAdd), so opening the
 // sheet never leaves an empty meal / stray delete icon behind.
-//  - log:         an existing logged meal — append items to it
-//  - newFromPlan: a plan slot with no logged meal yet — create (linked) on first add
-//  - newCustom:   a brand-new custom meal — create on first add
-//  - plan:        the plan editor — write straight into the recurring plan meal
+//  - log:         an existing logged meal - append items to it
+//  - newFromPlan: a plan slot with no logged meal yet - create (linked) on first add
+//  - newCustom:   a brand-new custom meal - create on first add
+//  - plan:        the plan editor - write straight into the recurring plan meal
 type SheetTarget =
   | { kind: "log"; mealId: string; title: string }
   | { kind: "newFromPlan"; planMealId: string; name: string; title: string }
@@ -42,6 +43,7 @@ export default function NutritionPage() {
   const removeLoggedItem = useStore((s) => s.removeLoggedItem);
   const pruneEmptyMeals = useStore((s) => s.pruneEmptyMeals);
   const addPlanItem = useStore((s) => s.addPlanItem);
+  const confirm = useConfirm();
 
   const [date, setDate] = useState(() => todayISO());
   const [editingPlan, setEditingPlan] = useState(false);
@@ -82,6 +84,25 @@ export default function NutritionPage() {
   const closeSheet = () => {
     pruneEmptyMeals(date); // safety net: drop any zero-item meal before leaving the day
     setTarget(null);
+  };
+
+  const askRemoveItem = async (mealId: string, entryId: string, mealName: string) => {
+    const ok = await confirm({
+      title: "Remove food?",
+      message: `Remove this food from ${mealName}?`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (ok) removeLoggedItem(date, mealId, entryId);
+  };
+  const askRemoveMeal = async (mealId: string, mealName: string) => {
+    const ok = await confirm({
+      title: "Remove meal?",
+      message: `"${mealName}" and its foods will be removed from this day.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (ok) removeLoggedMeal(date, mealId);
   };
 
   return (
@@ -125,8 +146,8 @@ export default function NutritionPage() {
                   key={pm.id}
                   meal={logged}
                   onAddFood={() => setTarget({ kind: "log", mealId: logged.id, title: `Add to ${logged.name}` })}
-                  onRemoveItem={(entryId) => removeLoggedItem(date, logged.id, entryId)}
-                  onRemoveMeal={() => removeLoggedMeal(date, logged.id)}
+                  onRemoveItem={(entryId) => askRemoveItem(logged.id, entryId, logged.name)}
+                  onRemoveMeal={() => askRemoveMeal(logged.id, logged.name)}
                 />
               ) : (
                 <PlanPlaceholder
@@ -147,8 +168,8 @@ export default function NutritionPage() {
                 editableName
                 onRename={(name) => renameLoggedMeal(date, m.id, name)}
                 onAddFood={() => setTarget({ kind: "log", mealId: m.id, title: `Add to ${m.name}` })}
-                onRemoveItem={(entryId) => removeLoggedItem(date, m.id, entryId)}
-                onRemoveMeal={() => removeLoggedMeal(date, m.id)}
+                onRemoveItem={(entryId) => askRemoveItem(m.id, entryId, m.name)}
+                onRemoveMeal={() => askRemoveMeal(m.id, m.name)}
               />
             ))}
 
@@ -218,7 +239,7 @@ function LoggedMealCard({
           </button>
         </div>
       ))}
-      {meal.items.length === 0 && <div className="empty sm">No foods yet — add one below.</div>}
+      {meal.items.length === 0 && <div className="empty sm">No foods yet - add one below.</div>}
 
       <div className="meal-actions">
         <button className="btn sm ghost" onClick={onAddFood}><Icon name="plus" /> Add food</button>
@@ -269,6 +290,26 @@ function PlanEditor({ onAddFood }: { onAddFood: (m: PlannedMeal) => void }) {
   const renamePlanMeal = useStore((s) => s.renamePlanMeal);
   const removePlanMeal = useStore((s) => s.removePlanMeal);
   const removePlanItem = useStore((s) => s.removePlanItem);
+  const confirm = useConfirm();
+
+  const askRemovePlanItem = async (mealId: string, itemId: string) => {
+    const ok = await confirm({
+      title: "Remove food?",
+      message: "This food will be removed from the recurring plan meal.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (ok) removePlanItem(mealId, itemId);
+  };
+  const askRemovePlanMeal = async (mealId: string, name: string) => {
+    const ok = await confirm({
+      title: "Remove meal?",
+      message: `"${name}" will be removed from your recurring plan.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (ok) removePlanMeal(mealId);
+  };
 
   return (
     <div className="plan-editor">
@@ -298,7 +339,7 @@ function PlanEditor({ onAddFood }: { onAddFood: (m: PlannedMeal) => void }) {
                   <span className="diaryrow-kcal">{it.kcal} kcal</span>
                   <span className="mchip p">Protein {it.p}g</span>
                 </div>
-                <button className="delbtn" onClick={() => removePlanItem(pm.id, it.id)} aria-label="remove food">
+                <button className="delbtn" onClick={() => askRemovePlanItem(pm.id, it.id)} aria-label="remove food">
                   <Icon name="trash" />
                 </button>
               </div>
@@ -306,7 +347,7 @@ function PlanEditor({ onAddFood }: { onAddFood: (m: PlannedMeal) => void }) {
             {pm.items.length === 0 && <div className="empty sm">No foods yet.</div>}
             <div className="meal-actions">
               <button className="btn sm ghost" onClick={() => onAddFood(pm)}><Icon name="plus" /> Add food</button>
-              <button className="btn sm ghost danger" onClick={() => removePlanMeal(pm.id)} aria-label="remove meal"><Icon name="trash" /></button>
+              <button className="btn sm ghost danger" onClick={() => askRemovePlanMeal(pm.id, pm.name)} aria-label="remove meal"><Icon name="trash" /></button>
             </div>
           </section>
         );

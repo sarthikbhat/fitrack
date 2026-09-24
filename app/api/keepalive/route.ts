@@ -14,7 +14,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ ok: false, reason: "unauthorized" }, { status: 401 });
     }
   } else {
-    console.warn("[keepalive] CRON_SECRET is unset — endpoint is unauthenticated");
+    console.warn("[keepalive] CRON_SECRET is unset - endpoint is unauthenticated");
   }
 
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

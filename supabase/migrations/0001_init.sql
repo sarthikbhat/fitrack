@@ -1,5 +1,5 @@
 -- =============================================================================
--- Fitrack sync schema — 0001_init.sql
+-- Fitrack sync schema - 0001_init.sql
 --
 -- Run this in the Supabase SQL editor (Dashboard → SQL Editor → New query, then
 -- paste + Run). It provisions the per-record, last-write-wins sync backend used

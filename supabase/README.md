@@ -12,8 +12,8 @@ table used to stop the free project auto-pausing.
 
 In Vercel (and `.env.local` for dev):
 
-- `NEXT_PUBLIC_SUPABASE_URL` — project URL (Settings → API)
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — anon/public key (Settings → API)
+- `NEXT_PUBLIC_SUPABASE_URL` - project URL (Settings → API)
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - anon/public key (Settings → API)
 
 Without both, the app stays local-first and `/api/keepalive` returns
 `{ ok: false, reason: "supabase not configured" }`.
@@ -37,5 +37,5 @@ the secret is set.
 independent of Vercel. Add two repo secrets (Settings → Secrets and variables →
 Actions):
 
-- `KEEPALIVE_URL` — deployed endpoint, e.g. `https://<app>.vercel.app/api/keepalive`
-- `CRON_SECRET` — same value as the Vercel `CRON_SECRET`
+- `KEEPALIVE_URL` - deployed endpoint, e.g. `https://<app>.vercel.app/api/keepalive`
+- `CRON_SECRET` - same value as the Vercel `CRON_SECRET`

@@ -5,7 +5,7 @@ import { runSync } from "@/lib/sync/engine";
 // Serialized, fire-and-forget wrapper around runSync so no two sync cycles ever run
 // concurrently. Every trigger (mount, store changes, focus/online, interval, the
 // "Sync now" button) funnels through syncOnce. If a run is in flight, the request is
-// coalesced into a single pending run that fires once the current one settles — so a
+// coalesced into a single pending run that fires once the current one settles - so a
 // burst of triggers collapses to at most one follow-up cycle. runSync itself self-
 // guards (no-op when unconfigured / signed-out / offline), so callers need no checks.
 

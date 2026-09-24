@@ -1,6 +1,6 @@
 "use client";
 
-// Train view — core workout logging. Ports legacy renderTrain (1679-1728),
+// Train view - core workout logging. Ports legacy renderTrain (1679-1728),
 // exCard (1650-1678), setRow (1639-1649) and cueRow/cueList (1739-1745).
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -20,12 +20,13 @@ import { massLabel, type MassUnit } from "@/lib/units";
 import { useExerciseModal } from "@/components/exercise/ExerciseModalProvider";
 import { usePicker } from "@/components/PickerProvider";
 import { useSwitch } from "@/components/SwitchProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 import type { PlanDay, PlanExercise } from "@/data/plan";
 
 /* ---- warm-up / cool-down cue row (legacy:1739-1745) ---- */
 function CueRow({ line }: { line: string }) {
   const { openExercise } = useExerciseModal();
-  const name = line.split(/[—–-]|\(/)[0].trim();
+  const name = line.split(/[-–-]|\(/)[0].trim();
   const e = getEx(name);
   const rest = line.slice(name.length);
   return (
@@ -203,6 +204,7 @@ export default function TrainPage() {
   const discardDay = useStore((s) => s.discardDay);
   const { openPicker } = usePicker();
   const { openSwitch } = useSwitch();
+  const confirm = useConfirm();
 
   const [openCards, setOpenCards] = useState<Record<string, boolean>>({});
   const toggleCard = (name: string) => setOpenCards((o) => ({ ...o, [name]: !o[name] }));
@@ -260,8 +262,14 @@ export default function TrainPage() {
     finishSession(date, plan.name, exs);
     router.push("/progress");
   };
-  const onDiscard = () => {
-    if (window.confirm("Discard today's sets for this workout?")) {
+  const onDiscard = async () => {
+    const ok = await confirm({
+      title: "Discard workout?",
+      message: "Today's logged sets for this workout will be cleared. This can't be undone.",
+      confirmLabel: "Discard",
+      danger: true,
+    });
+    if (ok) {
       discardDay(date, exs.map((e) => e.name));
       setOpenCards({});
     }
@@ -319,7 +327,7 @@ export default function TrainPage() {
             />
           ))
         ) : (
-          <div className="empty">No exercises yet — add some below to start logging.</div>
+          <div className="empty">No exercises yet - add some below to start logging.</div>
         )}
       </div>
       <button className="btn ghost addex" style={{ width: "100%", marginTop: 10 }} onClick={() => openPicker(plan.id)}>

@@ -1,4 +1,4 @@
-// Public profile page — server component (SSR). Reads the profile via a server
+// Public profile page - server component (SSR). Reads the profile via a server
 // Supabase client using the public SELECT RLS policy (anon key), so it renders
 // for signed-in and signed-out visitors alike. 404s when the username is unknown.
 import { notFound } from "next/navigation";

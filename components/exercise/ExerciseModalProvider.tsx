@@ -1,8 +1,8 @@
 "use client";
 
 // React replacement for the legacy global `S.modal` + `renderModal` (1971-2024).
-// A context exposes openExercise(name) — the local-first path, which name-matches the
-// exercise across the offline databases — and openExerciseById(id, name), the catalog
+// A context exposes openExercise(name) - the local-first path, which name-matches the
+// exercise across the offline databases - and openExerciseById(id, name), the catalog
 // path, which skips name-matching and pulls the EDB detail record directly by id. The
 // provider renders exactly one overlay for whichever target is active.
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";

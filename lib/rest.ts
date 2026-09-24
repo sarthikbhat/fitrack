@@ -1,7 +1,7 @@
 "use client";
 
 // Transient global rest timer (legacy restStart/restStop/restAdd, 2317-2325).
-// A separate, NON-persisted Zustand store — timer state must never survive a reload.
+// A separate, NON-persisted Zustand store - timer state must never survive a reload.
 import { useEffect, useState } from "react";
 import { create } from "zustand";
 
@@ -33,7 +33,7 @@ export function useRestRemaining(): number {
   const [left, setLeft] = useState(durationSec);
   const [prevEndsAt, setPrevEndsAt] = useState(endsAt);
 
-  // Sanctioned "adjust state during render" pattern — re-seed when the run changes.
+  // Sanctioned "adjust state during render" pattern - re-seed when the run changes.
   if (endsAt !== prevEndsAt) {
     setPrevEndsAt(endsAt);
     setLeft(endsAt ? durationSec : 0);

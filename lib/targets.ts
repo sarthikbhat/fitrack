@@ -1,4 +1,4 @@
-// TDEE / macro-target engine — Mifflin-St Jeor, local, no API.
+// TDEE / macro-target engine - Mifflin-St Jeor, local, no API.
 // Ported from legacy `calcTarget` (legacy:1783-1795). Pure & tested.
 import type { Goals } from "@/lib/types";
 

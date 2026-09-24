@@ -1,6 +1,6 @@
 "use client";
 
-// First-run onboarding wizard (NEW — no legacy equivalent). Shown full-screen by
+// First-run onboarding wizard (NEW - no legacy equivalent). Shown full-screen by
 // AppShell whenever profile === null. One focus per step, Back/Next, and a Skip that
 // fills sensible defaults. On finish it calls completeOnboarding(), which seeds
 // profile/body/goals and makes the app appear.

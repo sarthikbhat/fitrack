@@ -10,6 +10,7 @@ import { Sparkline } from "@/components/Sparkline";
 import { Heatmap } from "@/components/Heatmap";
 import { VolumeChart } from "@/components/VolumeChart";
 import { Icon } from "@/data/icons";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const shortDate = (iso: string) =>
@@ -25,6 +26,7 @@ export default function ProgressPage() {
   const setGoal = useStore((s) => s.setGoal);
   const setHeight = useStore((s) => s.setHeight);
   const deleteSession = useStore((s) => s.deleteSession);
+  const confirm = useConfirm();
 
   const u = massLabel(unit);
   const today = todayISO();
@@ -125,7 +127,7 @@ export default function ProgressPage() {
           <small> {u}</small>
         </div>
         <div className="bwlog-lbl">Log today&apos;s weight</div>
-        <div className="bwlog-hint">Adjust below — it records today&apos;s entry and builds your trend.</div>
+        <div className="bwlog-hint">Adjust below - it records today&apos;s entry and builds your trend.</div>
         <div className="bwedit">
           <button className="btn sm" onClick={() => adjustBw(-0.1)} aria-label="lower weight">–</button>
           <input
@@ -278,8 +280,14 @@ export default function ProgressPage() {
               </div>
               <button
                 className="delbtn"
-                onClick={() => {
-                  if (confirm("Delete this session?")) deleteSession(h.id);
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: "Delete session?",
+                    message: `This removes "${h.name}" from ${shortDate(h.date)} and its logged sets. This can't be undone.`,
+                    confirmLabel: "Delete",
+                    danger: true,
+                  });
+                  if (ok) deleteSession(h.id);
                 }}
                 aria-label="delete session"
               >
@@ -289,7 +297,7 @@ export default function ProgressPage() {
           ))
         ) : (
           <div className="empty">
-            Finish a session on the Train tab — your streak, heatmap, weekly volume and per-lift PRs build up here as
+            Finish a session on the Train tab - your streak, heatmap, weekly volume and per-lift PRs build up here as
             you log.
           </div>
         )}

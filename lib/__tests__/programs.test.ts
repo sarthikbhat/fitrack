@@ -68,7 +68,7 @@ describe("templates", () => {
 });
 
 describe("template cloning", () => {
-  test("cloned programs get independent day arrays — mutating one does not touch the template", () => {
+  test("cloned programs get independent day arrays - mutating one does not touch the template", () => {
     const tpl = templateById("full3")!;
     const a = cloneDays(tpl.days);
     const b = cloneDays(tpl.days);

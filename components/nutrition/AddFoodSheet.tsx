@@ -4,7 +4,7 @@
 // local foods (custom/seed) with debounced OpenFoodFacts results, plus a custom
 // food path. Pick a food → portion picker with a live macro preview → Add, which
 // calls `onAdd(food, qty, unit)` into the caller-supplied target (a logged meal
-// or a plan meal). The sheet stays open after an Add ("Added ✓ — add another")
+// or a plan meal). The sheet stays open after an Add ("Added ✓ - add another")
 // so several items land in one meal fast; Done closes it.
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
@@ -250,10 +250,10 @@ export function AddFoodSheet({
   return (
     <Sheet title={title} onClose={onClose}>
       {addedCount > 0 && (
-        <div className="afs-added">Added ✓ — add another, or Done when finished.</div>
+        <div className="afs-added">Added ✓ - add another, or Done when finished.</div>
       )}
       <input className="search" value={q} autoFocus autoComplete="off"
-        placeholder="Search foods — or add your own below"
+        placeholder="Search foods - or add your own below"
         onChange={(e) => setQ(e.target.value)} />
       {/* Always-visible discoverability entry; the empty-state CTA is the emphasis. */}
       <button className="btn ghost custom-cta" onClick={() => openCustom(needle)}>
@@ -314,7 +314,7 @@ function fmt(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(1);
 }
 // Friendlier display for the base units; serving labels pass through unchanged.
-// The VALUE stays g/ml/serving-label (macro math depends on it) — this is display only.
+// The VALUE stays g/ml/serving-label (macro math depends on it) - this is display only.
 function unitLabel(u: string, base: string): string {
   if (u === base) {
     if (base === "g") return "grams";

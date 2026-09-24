@@ -79,7 +79,7 @@ function ProfileForm({
         />
       </div>
       <p className="shint" style={{ margin: "4px 0 0" }}>
-        Your public handle at /u/{username || "username"} — 3–20 chars, a–z, 0–9, _
+        Your public handle at /u/{username || "username"} - 3–20 chars, a–z, 0–9, _
       </p>
 
       <label className="flbl" style={{ marginTop: 12 }}>Display name</label>

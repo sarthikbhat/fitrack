@@ -1,7 +1,7 @@
 "use client";
 
 // OAuth redirect target. The default signInWithOAuth flow is PKCE with the code
-// verifier held in the browser, so the exchange must happen client-side — a server
+// verifier held in the browser, so the exchange must happen client-side - a server
 // route handler can't see the verifier. We let supabase-js (detectSessionInUrl)
 // finalize the session on mount, then send the user home. If Supabase is
 // unconfigured or something goes wrong, we still redirect home (no dead end).

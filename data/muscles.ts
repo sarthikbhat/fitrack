@@ -1,6 +1,6 @@
 export type MuscleGroup = "Chest" | "Back" | "Shoulders" | "Arms" | "Legs" | "Core";
 
-/* six clearly separated hues — completed sets stay green, so no green here */
+/* six clearly separated hues - completed sets stay green, so no green here */
 export const MG: Record<MuscleGroup, string> = {
   Chest: "#00A8FF",
   Back: "#7C5CFF",

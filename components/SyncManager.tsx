@@ -11,14 +11,14 @@ import { syncOnce } from "@/lib/sync/run";
 //
 // Triggers (only while signed in + configured):
 //   - mount / sign-in: one bootstrap-aware run (runSync defaults bootstrap to
-//     lastSyncedAt===0 after loading meta — more correct than reading meta here,
+//     lastSyncedAt===0 after loading meta - more correct than reading meta here,
 //     which may not be hydrated yet and would force a spurious bootstrap).
 //   - local store changes: debounced ~2.5s.
 //   - window focus / online: immediate.
 //   - interval: every 60s (self-skips when nothing is dirty / offline).
 //
 // When signed out or unconfigured we fire a single guarded run (so the status chip
-// reflects 'signed-out' / 'unconfigured') and attach NO listeners — no network, no
+// reflects 'signed-out' / 'unconfigured') and attach NO listeners - no network, no
 // timers. Flipping userId back to a real id re-runs the effect and re-arms triggers.
 
 const CHANGE_DEBOUNCE_MS = 2500;

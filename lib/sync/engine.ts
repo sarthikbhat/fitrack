@@ -27,7 +27,7 @@ export type SyncResult = { pulled: number; pushed: number; applied: number };
 const PUSH_CHUNK = 500;
 
 // ---------------------------------------------------------------------------
-// Pure transforms (no network, no Date, no store) — the tested core.
+// Pure transforms (no network, no Date, no store) - the tested core.
 // ---------------------------------------------------------------------------
 
 const TABLE_BY_NAME = new Map(SYNC_TABLES.map((t) => [t.name, t]));
@@ -74,7 +74,7 @@ export function buildLocalUnits(state: State, syncMeta: SyncMeta): Unit[] {
 /**
  * Bootstrap claim: mark EVERY current local unit dirty (updatedAt = now) so the
  * first sync after sign-in uploads all local data and claims it into the account.
- * Pure — returns the meta patch; the caller persists it via stampUnits.
+ * Pure - returns the meta patch; the caller persists it via stampUnits.
  */
 export function bootstrapUpdates(state: State, now: number): Record<string, UnitMeta> {
   const updates: Record<string, UnitMeta> = {};

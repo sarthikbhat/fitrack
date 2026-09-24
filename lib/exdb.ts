@@ -1,6 +1,6 @@
 "use client";
 
-// free-exercise-db integration (source A: public, MIT/unlicense) — ported from
+// free-exercise-db integration (source A: public, MIT/unlicense) - ported from
 // legacy:1371-1422. Static ~800-entry JSON of exercise names, photos, instructions
 // and muscles. Lazy-loaded once, then cached as a big blob in IndexedDB (NOT the
 // zustand store, which is for user data). Provides the still-image thumbnails and
@@ -101,7 +101,7 @@ export function getEx(name: string): ExdbEntry | null {
 
 /* Resize + re-encode exercise images through a free image CDN (weserv.nl):
    source JPGs are ~850px/~90KB but render into small thumbs, so we pull width-capped
-   WebP instead — ~95% smaller, modern format (legacy:1587). */
+   WebP instead - ~95% smaller, modern format (legacy:1587). */
 export const cdnImg = (src: string, w: number, q?: number): string =>
   "https://images.weserv.nl/?url=" + encodeURIComponent(src) + "&w=" + w + "&output=webp&q=" + (q || 82) + "&we";
 

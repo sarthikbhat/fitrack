@@ -1,6 +1,6 @@
 // Muscle Visualizer API URL builder (source D). The current RapidAPI key plan caps
 // the upstream to a single working variant: format=jpeg, background=transparent,
-// size=small — anything else (png/webp, white background, larger sizes) 400s — so
+// size=small - anything else (png/webp, white background, larger sizes) 400s - so
 // those are hardcoded. Colours match the app tokens: emerald primary / indigo
 // secondary. The visualiser muscle vocabulary is a superset of EDB's target/secondary
 // muscle names, so EDB names pass straight through.

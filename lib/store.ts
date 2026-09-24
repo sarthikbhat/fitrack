@@ -41,7 +41,7 @@ import {
 import { todayISO } from "@/lib/dates";
 import { pruneEmptyMeals } from "@/lib/meals";
 
-// Seed foods are a static import, merged in at read time by allFoods() — never
+// Seed foods are a static import, merged in at read time by allFoods() - never
 // copied into the persisted store, so the saved blob stays small.
 const SEED_FOODS = seedFoodsRaw as unknown as Food[];
 

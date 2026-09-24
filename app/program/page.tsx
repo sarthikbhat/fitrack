@@ -1,6 +1,6 @@
 "use client";
 
-// Program view — the active workout program (Program Builder).
+// Program view - the active workout program (Program Builder).
 // A header shows the current program name and opens a switcher sheet to create programs
 // from templates, start blank, rename, delete, or switch between saved programs.
 // The day list renders the active program's days (or the default PLAN as a SAFE FALLBACK),
@@ -16,6 +16,7 @@ import { Thumb } from "@/components/exercise/Thumb";
 import { useExerciseModal } from "@/components/exercise/ExerciseModalProvider";
 import { usePicker } from "@/components/PickerProvider";
 import { Sheet } from "@/components/Sheet";
+import { useConfirm, usePrompt } from "@/components/ConfirmProvider";
 import { Icon } from "@/data/icons";
 
 function MiniEx({ ex, dayId }: { ex: PlanExercise; dayId: string }) {
@@ -114,21 +115,37 @@ function ProgramSheet({ onClose }: { onClose: () => void }) {
   const saveActiveAsProgram = useStore((s) => s.saveActiveAsProgram);
   const renameProgram = useStore((s) => s.renameProgram);
   const deleteProgram = useStore((s) => s.deleteProgram);
+  const confirm = useConfirm();
+  const prompt = usePrompt();
 
   const [mode, setMode] = useState<"main" | "template">("main");
   const list = Object.values(programs).sort((a, b) => b.updatedAt - a.updatedAt);
   const active = activeProgramId ? programs[activeProgramId] : undefined;
 
-  const doRename = (id: string, current: string) => {
-    const next = window.prompt("Rename program", current);
+  const doRename = async (id: string, current: string) => {
+    const next = await prompt({
+      title: "Rename program",
+      label: "Program name",
+      defaultValue: current,
+    });
     if (next != null && next.trim()) renameProgram(id, next);
   };
-  const doDelete = (id: string, name: string) => {
-    if (window.confirm(`Delete "${name}"? This can't be undone.`)) deleteProgram(id);
+  const doDelete = async (id: string, name: string) => {
+    const ok = await confirm({
+      title: "Delete program?",
+      message: `"${name}" and its days will be permanently deleted. This can't be undone.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (ok) deleteProgram(id);
   };
-  const doBlank = () => {
-    const name = window.prompt("Name your program", "New Program");
-    if (name != null) {
+  const doBlank = async () => {
+    const name = await prompt({
+      title: "Name your program",
+      label: "Program name",
+      defaultValue: "New Program",
+    });
+    if (name != null && name.trim()) {
       createBlankProgram(name);
       onClose();
     }
@@ -136,7 +153,7 @@ function ProgramSheet({ onClose }: { onClose: () => void }) {
 
   if (mode === "template") {
     return (
-      <Sheet title="New from template" hint="Pick a split — it's copied in so you can customize it freely." onClose={onClose}>
+      <Sheet title="New from template" hint="Pick a split - it's copied in so you can customize it freely." onClose={onClose}>
         {TEMPLATES.map((t) => (
           <button
             key={t.id}
@@ -249,7 +266,7 @@ export default function ProgramPage() {
       <section className="panel progbar">
         <div style={{ minWidth: 0, flex: 1 }}>
           <div className="dname cond">{title}</div>
-          <div className="fc">{active ? "Your program" : "Built-in — save it to customize"}</div>
+          <div className="fc">{active ? "Your program" : "Built-in - save it to customize"}</div>
         </div>
         <button className="btn sm ghost" onClick={() => setSheetOpen(true)}>
           <Icon name="program" />
@@ -263,7 +280,7 @@ export default function ProgramPage() {
         ))}
       </div>
       {days.length === 0 ? (
-        <p className="empty">No days yet — add exercises, or switch to a template.</p>
+        <p className="empty">No days yet - add exercises, or switch to a template.</p>
       ) : (
         <p className="empty">Days beyond your split are rest days.</p>
       )}

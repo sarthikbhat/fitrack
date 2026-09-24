@@ -1,10 +1,10 @@
-// Workout program templates — the seed catalogue the Program Builder clones from.
+// Workout program templates - the seed catalogue the Program Builder clones from.
 // Each template is a ready-made split of PlanDay[]; cloning one (store.createProgramFromTemplate)
 // deep-copies these days into a new Program so edits never touch the template.
 //
 // Every template day carries a program-unique id (prefixed with the template id) EXCEPT
-// "6-Day PPL", which keeps d1..d6 so the app's existing added/removed/order edits — which are
-// keyed by day id — continue to apply to the default split when it becomes a saved program.
+// "6-Day PPL", which keeps d1..d6 so the app's existing added/removed/order edits - which are
+// keyed by day id - continue to apply to the default split when it becomes a saved program.
 import type { PlanDay } from "@/data/plan";
 import { PLAN } from "@/data/plan";
 
@@ -164,7 +164,7 @@ const antagonist6: PlanDay[] = [
     id: "anta-d1",
     label: "Day 1",
     name: "Chest & Triceps A",
-    focus: "Push antagonists — strength + core",
+    focus: "Push antagonists - strength + core",
     tags: ["Chest", "Arms", "Core"],
     ex: [
       { name: "Barbell Bench Press", muscle: "Chest", sets: 4, reps: "6–8", start: 35 },
@@ -179,7 +179,7 @@ const antagonist6: PlanDay[] = [
     id: "anta-d2",
     label: "Day 2",
     name: "Back & Biceps A",
-    focus: "Pull antagonists — strength + core",
+    focus: "Pull antagonists - strength + core",
     tags: ["Back", "Arms", "Core"],
     ex: [
       { name: "Deadlift", muscle: "Back", sets: 3, reps: "5", start: 60 },
@@ -194,7 +194,7 @@ const antagonist6: PlanDay[] = [
     id: "anta-d3",
     label: "Day 3",
     name: "Shoulders & Legs A",
-    focus: "Overhead + lower body — strength + core",
+    focus: "Overhead + lower body - strength + core",
     tags: ["Shoulders", "Legs", "Core"],
     ex: [
       { name: "Standing Overhead Press", muscle: "Shoulders", sets: 4, reps: "6–8", start: 25 },
@@ -209,7 +209,7 @@ const antagonist6: PlanDay[] = [
     id: "anta-d4",
     label: "Day 4",
     name: "Chest & Triceps B",
-    focus: "Push antagonists — hypertrophy + core",
+    focus: "Push antagonists - hypertrophy + core",
     tags: ["Chest", "Arms", "Core"],
     ex: [
       { name: "Barbell Bench Press", muscle: "Chest", sets: 3, reps: "10–12", start: 35 },
@@ -224,7 +224,7 @@ const antagonist6: PlanDay[] = [
     id: "anta-d5",
     label: "Day 5",
     name: "Back & Biceps B",
-    focus: "Pull antagonists — hypertrophy + core",
+    focus: "Pull antagonists - hypertrophy + core",
     tags: ["Back", "Arms", "Core"],
     ex: [
       { name: "Deadlift", muscle: "Back", sets: 3, reps: "8–10", start: 60 },
@@ -239,7 +239,7 @@ const antagonist6: PlanDay[] = [
     id: "anta-d6",
     label: "Day 6",
     name: "Shoulders & Legs B",
-    focus: "Overhead + lower body — hypertrophy + core",
+    focus: "Overhead + lower body - hypertrophy + core",
     tags: ["Shoulders", "Legs", "Core"],
     ex: [
       { name: "Standing Overhead Press", muscle: "Shoulders", sets: 3, reps: "10–12", start: 25 },
@@ -558,13 +558,13 @@ export const TEMPLATES: ProgramTemplate[] = [
   {
     id: "ppl6",
     name: "6-Day PPL",
-    description: "Push · Pull · Legs run twice a week — the app's original split.",
+    description: "Push · Pull · Legs run twice a week - the app's original split.",
     days: PLAN,
   },
   {
     id: "full3",
     name: "3-Day Full Body",
-    description: "Three balanced full-body sessions — ideal for beginners or busy weeks.",
+    description: "Three balanced full-body sessions - ideal for beginners or busy weeks.",
     days: fullBody,
   },
   {
@@ -576,37 +576,37 @@ export const TEMPLATES: ProgramTemplate[] = [
   {
     id: "ppl3",
     name: "3-Day Push/Pull/Legs",
-    description: "One push, one pull, one legs — the classic split on a 3-day cadence.",
+    description: "One push, one pull, one legs - the classic split on a 3-day cadence.",
     days: ppl3,
   },
   {
     id: "anta6",
     name: "6-Day Antagonist Split",
-    description: "Chest+triceps, back+biceps, shoulders+legs — each pairing trained twice a week (a strength day and a hypertrophy day), with a core finisher every day.",
+    description: "Chest+triceps, back+biceps, shoulders+legs - each pairing trained twice a week (a strength day and a hypertrophy day), with a core finisher every day.",
     days: antagonist6,
   },
   {
     id: "bro5",
     name: "5-Day Bro Split",
-    description: "One body part a day — chest, back, shoulders, arms, legs — for maximum per-muscle volume.",
+    description: "One body part a day - chest, back, shoulders, arms, legs - for maximum per-muscle volume.",
     days: broSplit5,
   },
   {
     id: "arnold6",
     name: "Arnold Split",
-    description: "Chest+back, shoulders+arms, legs — run twice a week the way Arnold trained.",
+    description: "Chest+back, shoulders+arms, legs - run twice a week the way Arnold trained.",
     days: arnold6,
   },
   {
     id: "phul4",
     name: "PHUL",
-    description: "Power Hypertrophy Upper Lower — two heavy power days and two higher-volume hypertrophy days.",
+    description: "Power Hypertrophy Upper Lower - two heavy power days and two higher-volume hypertrophy days.",
     days: phul4,
   },
   {
     id: "phat5",
     name: "PHAT",
-    description: "Power Hypertrophy Adaptive Training — two power days plus three body-part hypertrophy days.",
+    description: "Power Hypertrophy Adaptive Training - two power days plus three body-part hypertrophy days.",
     days: phat5,
   },
 ];

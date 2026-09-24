@@ -1,7 +1,7 @@
 import { unitKey } from "@/lib/sync/registry";
 
 // Pure, side-effect-free merge logic for per-record last-write-wins sync.
-// No network, no Date, no IO — everything here is deterministic and testable.
+// No network, no Date, no IO - everything here is deterministic and testable.
 
 /** A unit as tracked locally (client-side stamp uses `updatedAt`). */
 export type LocalUnit = {

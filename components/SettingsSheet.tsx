@@ -1,9 +1,10 @@
 "use client";
 
-// Settings sheet — ports legacy renderSheet('settings') (legacy:2385-2420) plus the
+// Settings sheet - ports legacy renderSheet('settings') (legacy:2385-2420) plus the
 // export/import/resetAll data handlers (legacy:2328-2344, 2216). Reuses <Sheet>.
 import { useEffect, useRef, useState } from "react";
 import { Sheet } from "@/components/Sheet";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { Seg, Toggle } from "@/components/Controls";
 import { useStore } from "@/lib/store";
 import { todayISO } from "@/lib/dates";
@@ -53,6 +54,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
 
   const { email, status, loading } = useAuth();
   const sync = useSyncStatus();
+  const confirm = useConfirm();
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -122,11 +124,26 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const syncDisabled =
     sync.status === "syncing" || sync.status === "signed-out" || sync.status === "unconfigured";
 
-  const onErase = () => {
-    if (window.confirm("Erase ALL Fitrack data on this device? This cannot be undone.")) {
+  const onErase = async () => {
+    const ok = await confirm({
+      title: "Erase all data?",
+      message: "This permanently deletes everything on this device and can't be undone.",
+      confirmLabel: "Erase everything",
+      danger: true,
+    });
+    if (ok) {
       resetAll();
       onClose();
     }
+  };
+
+  const onSignOut = async () => {
+    const ok = await confirm({
+      title: "Sign out?",
+      message: "You'll stop syncing on this device. Your data stays saved locally.",
+      confirmLabel: "Sign out",
+    });
+    if (ok) void signOut();
   };
 
   return (
@@ -303,7 +320,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           <button
             className="btn ghost"
             style={{ width: "100%", marginTop: 8 }}
-            onClick={() => signOut()}
+            onClick={onSignOut}
           >
             Sign out
           </button>

@@ -40,7 +40,7 @@ function stabilise(value: unknown): unknown {
 }
 
 // ---------------------------------------------------------------------------
-// Pure diff pieces (no IO, no Date) — these are the tested core.
+// Pure diff pieces (no IO, no Date) - these are the tested core.
 // ---------------------------------------------------------------------------
 
 /** Serialise every unit of a State into a Map<unitKey, stableJSON>. */
@@ -61,7 +61,7 @@ export type Diff = { changed: string[]; deleted: string[] };
  *  - a key new-or-changed in `next` → changed (stamp updatedAt = now),
  *  - a key present in `prev` but absent in `next` → deleted (tombstone).
  * Singletons are always present in a snapshot, so only collections can appear
- * in `deleted` — singletons never produce tombstones.
+ * in `deleted` - singletons never produce tombstones.
  * `now` is threaded in so the function stays pure.
  */
 export function recordChanges(

@@ -3,7 +3,7 @@ import type { Food, LoggedMeal } from "@/lib/types";
 export type Macros = { kcal: number; p: number; c: number; f: number };
 
 /**
- * Resolve a portion to grams (or ml — the food's base unit).
+ * Resolve a portion to grams (or ml - the food's base unit).
  * `unit === 'g' | 'ml'` is taken as a literal quantity; any other unit is
  * treated as a named serving label and multiplied by that serving's gram weight.
  * An unknown label resolves to 0 grams (nothing logged rather than a wrong guess).
@@ -50,7 +50,7 @@ export function dayTotals(meals: LoggedMeal[]): Macros {
   return sumMacros(meals.flatMap((m) => m.items));
 }
 
-/** One decimal place — keeps macro grams tidy without float dust. */
+/** One decimal place - keeps macro grams tidy without float dust. */
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }

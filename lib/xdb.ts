@@ -1,7 +1,7 @@
 "use client";
 
 // ExerciseDB API (source B: animated GIFs + richer data) via the /api/exercisedb
-// serverless proxy — ported from legacy:1427-1458. Layered on top of free-exercise-db:
+// serverless proxy - ported from legacy:1427-1458. Layered on top of free-exercise-db:
 // used ONLY by the how-to modal to show a live GIF when available. Fails silently
 // (offline / no API key) so the app still works from the local DB.
 import { get, set } from "idb-keyval";

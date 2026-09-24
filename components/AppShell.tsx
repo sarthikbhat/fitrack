@@ -13,6 +13,7 @@ import { AccountControl } from "@/components/AccountControl";
 import { RestBar } from "@/components/RestBar";
 import { Onboarding } from "@/components/Onboarding";
 import { SyncManager } from "@/components/SyncManager";
+import { ConfirmProvider } from "@/components/ConfirmProvider";
 import { Icon } from "@/data/icons";
 import { useStore } from "@/lib/store";
 
@@ -65,8 +66,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <HydrationGate>
       <ThemeSync />
-      <AuthOverlay />
-      <Gate>{children}</Gate>
+      <ConfirmProvider>
+        <AuthOverlay />
+        <Gate>{children}</Gate>
+      </ConfirmProvider>
     </HydrationGate>
   );
 }

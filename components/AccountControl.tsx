@@ -11,11 +11,13 @@ import { Avatar } from "@/components/Avatar";
 import { useAuth, signInWithGoogle, signOut } from "@/lib/auth";
 import { useMyProfile } from "@/lib/useMyProfile";
 import { useSettings } from "@/components/SettingsProvider";
+import { useConfirm } from "@/components/ConfirmProvider";
 
 export function AccountControl({ variant }: { variant: "sidebar" | "header" }) {
   const { status, email, loading } = useAuth();
   const { profile } = useMyProfile();
   const { openSettings } = useSettings();
+  const confirm = useConfirm();
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -102,9 +104,14 @@ export function AccountControl({ variant }: { variant: "sidebar" | "header" }) {
       <button
         className="acct-menu-item danger"
         role="menuitem"
-        onClick={() => {
+        onClick={async () => {
           setOpen(false);
-          void signOut();
+          const ok = await confirm({
+            title: "Sign out?",
+            message: "You'll stop syncing on this device. Your data stays saved locally.",
+            confirmLabel: "Sign out",
+          });
+          if (ok) void signOut();
         }}
       >
         Sign out

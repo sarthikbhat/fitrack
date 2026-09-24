@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Fitrack design tokens (dark-first — ported verbatim from legacy/index.html:27-37). */
+/* Fitrack design tokens (dark-first - ported verbatim from legacy/index.html:27-37). */
 :root {
   --bg: #0b0d10;
   --bg2: #101318;
@@ -236,7 +236,7 @@ header.top {
   background: rgba(255, 255, 255, 0.02);
 }
 /* A chip that trails a title (e.g. day name + "Today", program name + "Active")
-   needs breathing room so it doesn't butt against the text — the inline space
+   needs breathing room so it doesn't butt against the text - the inline space
    collapses against the inline-flex chip. */
 .nm .chip {
   margin-left: 8px;
@@ -298,6 +298,19 @@ header.top {
   padding: 7px 11px;
   font-size: 12px;
   border-radius: 8px;
+}
+/* Solid destructive button (confirm dialogs). Scoped with :not(.ghost) so the
+   existing ghost-style .btn.danger trash buttons (nutrition meal actions) keep
+   their transparent look. */
+.btn.danger:not(.ghost) {
+  background: var(--danger);
+  color: #ffffff;
+  border: none;
+  box-shadow: var(--shadow);
+}
+.btn.danger:not(.ghost):hover {
+  filter: brightness(1.08);
+  border-color: transparent;
 }
 .cell {
   background: var(--panel2);
@@ -633,7 +646,7 @@ header.top {
   padding: 14px 4px 4px;
   text-align: center;
 }
-/* Secondary progress cards (heatmap, weekly volume) — reflow so a lone card
+/* Secondary progress cards (heatmap, weekly volume) - reflow so a lone card
    fills the width instead of leaving a blank half-column. */
 .dash-secondary {
   display: grid;
@@ -1371,6 +1384,49 @@ nav.tabs {
 }
 .modal .content {
   padding: 16px 18px 24px;
+}
+
+/* Centered confirm / prompt dialog. Reuses .overlay + .modal; overrides the
+   bottom-sheet alignment so it sits centered on all sizes. */
+.confirm-overlay {
+  align-items: center;
+  padding: 20px;
+}
+.modal.confirm {
+  max-width: 400px;
+  border-radius: 16px;
+  padding: 20px 20px 18px;
+  animation: pop 0.22s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+.confirm-title {
+  margin: 0;
+  font-size: 19px;
+}
+.confirm-msg {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.confirm-label {
+  display: block;
+  margin: 14px 0 6px;
+}
+.confirm-input {
+  width: 100%;
+  margin-top: 14px;
+}
+.confirm-label + .confirm-input {
+  margin-top: 0;
+}
+.confirmbtns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+.confirmbtns .btn {
+  min-width: 92px;
 }
 .modal .metarow {
   display: flex;
@@ -3014,7 +3070,7 @@ nav.tabs {
 }
 
 /* ============================================================================
-   DESKTOP — persistent sidebar + wide multi-column layouts (>= 900px).
+   DESKTOP - persistent sidebar + wide multi-column layouts (>= 900px).
    Mobile (< 900px) keeps the top header + bottom nav single column untouched.
    Both layouts live in the DOM; only CSS `display` toggles between them, so it
    is fully SSR / hydration-safe (no JS resize logic).
@@ -3122,7 +3178,7 @@ nav.tabs {
   }
 
   /* main column: use the width, comfortable gutters, no bottom-nav reserve.
-     width:100% is required — inside the grid cell, `margin:0 auto` alone would
+     width:100% is required - inside the grid cell, `margin:0 auto` alone would
      disable stretch and shrink .wrap to its content width. */
   .wrap {
     width: 100%;
@@ -3223,7 +3279,7 @@ nav.tabs {
   }
 }
 
-/* Library catalog grid — always fill available width with as many cards as fit.
+/* Library catalog grid - always fill available width with as many cards as fit.
    Higher specificity (main .libgrid) so it overrides the earlier fixed-column
    rules at every breakpoint. One column only when the container is truly narrow. */
 main .libgrid {
@@ -3236,7 +3292,7 @@ main .libgrid {
 }
 
 /* ============================================================================
-   Account presence — avatar, sidebar/header account block + menu, profile page.
+   Account presence - avatar, sidebar/header account block + menu, profile page.
    All token-driven so both themes track automatically.
    ============================================================================ */
 

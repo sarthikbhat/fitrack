@@ -5,7 +5,7 @@ import { ensureSyncMetaLoaded, primeSnapshot, trackChanges } from "@/lib/sync/ch
 
 // Small client-side init that wires the persist-diff tracker to the store. Kept
 // out of changes.ts so the pure diff never depends on the store (no import cycle).
-// Network push/pull is deferred to the next plan — this only maintains SyncMeta.
+// Network push/pull is deferred to the next plan - this only maintains SyncMeta.
 
 const DEBOUNCE_MS = 400;
 
@@ -13,7 +13,7 @@ let started = false;
 
 /** Subscribe the change tracker to the store (idempotent, debounced). */
 export function initSyncTracking(): () => void {
-  if (started) return () => {};
+  if (started) return () => { };
   started = true;
 
   let timer: ReturnType<typeof setTimeout> | null = null;

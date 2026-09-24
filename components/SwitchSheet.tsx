@@ -1,8 +1,8 @@
 "use client";
 
 // Switch-workout sheet (legacy switchSheetHTML/pickWorkout, 2347-2365,2181-2187).
-// Load any of the 6 planned days into today, start an empty freestyle day, or —
-// when a custom day is already active — revert to the planned day.
+// Load any of the 6 planned days into today, start an empty freestyle day, or -
+// when a custom day is already active - revert to the planned day.
 import { useStore } from "@/lib/store";
 import { todayISO } from "@/lib/dates";
 import { plannedForToday, activeDays } from "@/lib/day";
@@ -29,7 +29,7 @@ export function SwitchSheet({ onClose }: { onClose: () => void }) {
   return (
     <Sheet
       title="Today's workout"
-      hint="Feel like something else? Pick a template or start blank — it records the same way."
+      hint="Feel like something else? Pick a template or start blank - it records the same way."
       onClose={onClose}
     >
       {active && (
@@ -47,7 +47,7 @@ export function SwitchSheet({ onClose }: { onClose: () => void }) {
       <button className="pickrow" onClick={() => pick(() => startFreestyle(today))}>
         <div className="pmeta">
           <div className="nm">Freestyle</div>
-          <div style={{ marginTop: 3, fontSize: 12, color: "var(--dim)" }}>Empty — add exercises as you go</div>
+          <div style={{ marginTop: 3, fontSize: 12, color: "var(--dim)" }}>Empty - add exercises as you go</div>
         </div>
         <span className="pickadd">Start</span>
       </button>

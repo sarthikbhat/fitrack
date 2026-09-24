@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // OpenFoodFacts search proxy. OFF requires a descriptive User-Agent, which
-// browsers can't set on a cross-origin fetch — so the request is proxied here.
+// browsers can't set on a cross-origin fetch - so the request is proxied here.
 export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q) return NextResponse.json({ products: [] });
 
-  // Use the modern Search-a-licious service — the legacy cgi/search.pl and the
+  // Use the modern Search-a-licious service - the legacy cgi/search.pl and the
   // v2 search endpoint frequently return "Page temporarily unavailable".
   const params = new URLSearchParams({
     q,

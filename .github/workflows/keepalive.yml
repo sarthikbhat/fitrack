@@ -28,7 +28,7 @@ jobs:
           CRON_SECRET: ${{ secrets.CRON_SECRET }}
         run: |
           if [ -z "$KEEPALIVE_URL" ]; then
-            echo "KEEPALIVE_URL secret not set — skipping ping."
+            echo "KEEPALIVE_URL secret not set - skipping ping."
             exit 0
           fi
           echo "Pinging $KEEPALIVE_URL"

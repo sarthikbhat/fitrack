@@ -4,7 +4,7 @@ import { emptyState } from "@/lib/migrate";
 // The sync registry is the single source of truth mapping the Zustand `State`
 // onto the six sync tables. Each SYNC UNIT is one row (user_id, id, data,
 // updated_at, deleted). The engine (next plan) stays generic by driving
-// everything through these table descriptors — extract units out of a State,
+// everything through these table descriptors - extract units out of a State,
 // apply a unit back into a draft, or remove one.
 
 export type SyncKind = "collection" | "singleton";
@@ -127,7 +127,7 @@ export const SYNC_TABLES: readonly SyncTable[] = [
   singletonsTable,
 ];
 
-/** `${table}:${id}` — the stable key used across snapshots, meta, and merge. */
+/** `${table}:${id}` - the stable key used across snapshots, meta, and merge. */
 export function unitKey(table: string, id: string): string {
   return `${table}:${id}`;
 }

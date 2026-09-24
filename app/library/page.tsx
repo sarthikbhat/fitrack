@@ -1,6 +1,6 @@
 "use client";
 
-// Exercise library — a LOCAL, offline-first, filterable catalog. Backed by lib/catalog.ts,
+// Exercise library - a LOCAL, offline-first, filterable catalog. Backed by lib/catalog.ts,
 // which merges free-exercise-db (~800, source A) with the AscendAPI ExerciseDB list (~200,
 // source C: adds VIDEO + rich detail) into ONE index searched entirely client-side. No more
 // 200-cap, no per-keystroke network: once loaded (both sources cached in IndexedDB) it works
@@ -106,7 +106,7 @@ function FilterSelect({
   );
 }
 
-// Map an incoming URL param value (from a tapped detail-modal chip — AscendAPI vocabulary
+// Map an incoming URL param value (from a tapped detail-modal chip - AscendAPI vocabulary
 // like "TRICEPS BRACHII" / "BARBELL", or a free-db lowercase value) onto a facet value.
 const toMuscleFacet = (v: string): string => (v ? toMuscleGroup(v) || "" : "");
 const toEquipFacet = (v: string): string => v.trim().toLowerCase();
@@ -129,7 +129,7 @@ function LibraryContent() {
 
   // Re-seed when the query string changes via navigation while already mounted (a modal chip
   // on the /library route pushes new params). Adjust-during-render guard keyed on the string
-  // form of the params — no set-state-in-effect cascade.
+  // form of the params - no set-state-in-effect cascade.
   const spString = params.toString();
   const [prevSp, setPrevSp] = useState(spString);
   if (prevSp !== spString) {

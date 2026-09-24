@@ -1,9 +1,9 @@
-/* Fitrack service worker — offline shell + runtime caching */
+/* Fitrack service worker - offline shell + runtime caching */
 const CACHE = 'fitrack-v1';
 const SHELL = ['./', './index.html', './manifest.json', './icon.svg'];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()).catch(() => {}));
+  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()).catch(() => { }));
 });
 
 self.addEventListener('activate', e => {
@@ -37,7 +37,7 @@ self.addEventListener('fetch', e => {
             const cache = url.origin === location.origin || /githubusercontent|gstatic|googleapis|weserv/.test(url.hostname);
             if (cache) { const cp = r.clone(); caches.open(CACHE).then(c => c.put(req, cp)); }
           }
-        } catch (x) {}
+        } catch (x) { }
         return r;
       }).catch(() => m);
     })

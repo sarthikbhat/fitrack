@@ -43,7 +43,7 @@ export type AuthState = {
 /**
  * Reads the current session and subscribes to auth changes. On sign-in the store
  * userId flips to the Supabase user id; on sign-out it reverts to 'local'. Local
- * data always stays put — we only ever change the id we tag it with.
+ * data always stays put - we only ever change the id we tag it with.
  */
 export function useAuth(): AuthState {
   const setUserId = useStore((s) => s.setUserId);
@@ -57,7 +57,7 @@ export function useAuth(): AuthState {
   useEffect(() => {
     const sb = getSupabase();
     // getSupabase() is null only when unconfigured, in which case `loading` was
-    // already initialized to false — nothing to do, and no sync setState here
+    // already initialized to false - nothing to do, and no sync setState here
     // (which would trigger cascading renders).
     if (!sb) return;
     let active = true;
@@ -76,7 +76,7 @@ export function useAuth(): AuthState {
       setUserId(u ? u.id : "local");
       setLoading(false);
       provision(u);
-      // Auth resolved on the destination — clear any sign-in overlay.
+      // Auth resolved on the destination - clear any sign-in overlay.
       setAuthPending(false);
     });
 

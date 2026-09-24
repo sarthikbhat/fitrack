@@ -2,7 +2,7 @@
 
 // Optional browser Supabase client. Auth is a bolt-on: if the two public env
 // vars are unset (no Supabase project yet), getSupabase() returns null and the
-// whole app keeps working offline/local-first exactly as before — no crash.
+// whole app keeps working offline/local-first exactly as before - no crash.
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -11,7 +11,7 @@ const ANON =
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
-/** True only when both public env vars are present — i.e. cloud sync is available. */
+/** True only when both public env vars are present - i.e. cloud sync is available. */
 export function isSupabaseConfigured(): boolean {
   return Boolean(URL && ANON);
 }
