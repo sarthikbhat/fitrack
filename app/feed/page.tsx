@@ -10,6 +10,8 @@ import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { Icon } from "@/data/icons";
 import { useConfirm } from "@/components/ConfirmProvider";
+import { useSettings } from "@/components/SettingsProvider";
+import { useStore } from "@/lib/store";
 import { useAuth, signInWithGoogle } from "@/lib/auth";
 import { useMyProfile } from "@/lib/useMyProfile";
 import { relativeTime } from "@/lib/sync/relativeTime";
@@ -235,6 +237,8 @@ export default function FeedPage() {
   const { status, user, loading } = useAuth();
   const { profile } = useMyProfile();
   const confirm = useConfirm();
+  const { openSettings } = useSettings();
+  const shareWorkouts = useStore((s) => s.settings.shareWorkouts);
   const [items, setItems] = useState<FeedItem[]>([]);
   const [feedLoading, setFeedLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -347,6 +351,16 @@ export default function FeedPage() {
         <h1 className="page-title">Feed</h1>
         <p className="feed-sub">Your workouts and the people you follow.</p>
       </header>
+
+      {!shareWorkouts && (
+        <div className="feed-sharehint">
+          <Icon name="bell" />
+          <span>Your workouts aren&rsquo;t shared to the feed.</span>
+          <button className="feed-sharehint-cta" onClick={openSettings}>
+            Turn on sharing
+          </button>
+        </div>
+      )}
 
       {feedLoading && !loaded && <p className="empty">Loading your feed…</p>}
 

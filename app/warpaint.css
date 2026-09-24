@@ -3564,6 +3564,50 @@ main .libgrid {
   font-size: 12px;
   color: var(--muted);
   white-space: nowrap;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  cursor: pointer;
+}
+.follow-count:hover {
+  color: var(--text);
+}
+/* followers / following list modal */
+.folllist {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.folllist-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+}
+.folllist-who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  color: var(--text);
+  text-decoration: none;
+}
+.folllist-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.folllist-name {
+  font-size: 14px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.folllist-handle {
+  font-size: 12px;
+  color: var(--dim);
 }
 .follow-count b {
   color: var(--text);
@@ -4355,6 +4399,40 @@ main .libgrid {
 }
 .snav-legal a:hover {
   color: var(--accent);
+}
+
+/* ---------- feed share hint ---------- */
+.feed-sharehint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line2);
+  border-radius: 12px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.feed-sharehint svg {
+  width: 16px;
+  height: 16px;
+  color: var(--dim);
+  flex-shrink: 0;
+}
+.feed-sharehint-cta {
+  margin-left: auto;
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+.feed-sharehint-cta:hover {
+  text-decoration: underline;
 }
 
 /* ---------- notifications bell ---------- */

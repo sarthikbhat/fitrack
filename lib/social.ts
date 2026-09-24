@@ -179,6 +179,68 @@ export async function getFollowers(limit = 50): Promise<FollowerNotice[]> {
 }
 
 /**
+ * Shared helper: given a set of follow edges (already selected), resolve the other
+ * party's profile and whether the signed-in viewer follows each of them.
+ * `otherIds` is the list of user ids to look up profiles for.
+ */
+async function hydrateFollowList(
+  sb: SupabaseClient,
+  otherIds: string[],
+): Promise<FollowerNotice[]> {
+  if (otherIds.length === 0) return [];
+  const viewer = await currentUserId(sb);
+  const [profRes, mineRes] = await Promise.all([
+    sb.from("profiles").select("id, username, display_name, avatar_url").in("id", otherIds),
+    viewer
+      ? sb.from("follows").select("followee").eq("follower", viewer).in("followee", otherIds)
+      : Promise.resolve({ data: [] as { followee: string }[] }),
+  ]);
+  const pById = new Map(
+    (profRes.data ?? []).map((p) => [p.id as string, p as Record<string, unknown>]),
+  );
+  const iFollow = new Set(((mineRes.data ?? []) as { followee: string }[]).map((r) => r.followee));
+  return otherIds.map((id) => {
+    const p = pById.get(id);
+    return {
+      id,
+      username: (p?.username as string) ?? null,
+      display_name: (p?.display_name as string) ?? null,
+      avatar_url: (p?.avatar_url as string) ?? null,
+      createdAt: null,
+      youFollow: iFollow.has(id),
+    };
+  });
+}
+
+/** People who follow `userId` (public), each with a `youFollow` flag for the viewer. */
+export async function getFollowersOf(userId: string, limit = 200): Promise<FollowerNotice[]> {
+  const sb = getSupabase();
+  if (!sb || !userId) return [];
+  const { data, error } = await sb
+    .from("follows")
+    .select("follower, created_at")
+    .eq("followee", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error || !data) return [];
+  return hydrateFollowList(sb, data.map((r) => r.follower as string));
+}
+
+/** People `userId` follows (public), each with a `youFollow` flag for the viewer. */
+export async function getFollowingOf(userId: string, limit = 200): Promise<FollowerNotice[]> {
+  const sb = getSupabase();
+  if (!sb || !userId) return [];
+  const { data, error } = await sb
+    .from("follows")
+    .select("followee, created_at")
+    .eq("follower", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error || !data) return [];
+  return hydrateFollowList(sb, data.map((r) => r.followee as string));
+}
+
+/**
  * Search public profiles by username OR display name (case-insensitive, partial).
  * Public read, so it works signed-out too. Returns [] for an empty query or when
  * unconfigured. Pass `excludeSelf` to drop the signed-in user's own row from the

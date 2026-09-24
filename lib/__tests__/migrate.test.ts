@@ -22,11 +22,11 @@ describe("migrate", () => {
 });
 
 describe("shareWorkouts opt-in default + passthrough", () => {
-  test("emptyState defaults shareWorkouts to true (on by default)", () => {
-    expect(emptyState().settings.shareWorkouts).toBe(true);
+  test("emptyState defaults shareWorkouts to false (opt-in / off by default)", () => {
+    expect(emptyState().settings.shareWorkouts).toBe(false);
   });
 
-  test("an older blob whose settings lack shareWorkouts gets it defaulted to true", () => {
+  test("an older blob whose settings lack shareWorkouts gets it defaulted to false", () => {
     const blob = {
       ...emptyState(),
       settings: { rest: 120, autoRest: false }, // legacy shape, no shareWorkouts
@@ -34,7 +34,7 @@ describe("shareWorkouts opt-in default + passthrough", () => {
     const out = migrate(blob);
     expect(out.settings.rest).toBe(120);
     expect(out.settings.autoRest).toBe(false);
-    expect(out.settings.shareWorkouts).toBe(true);
+    expect(out.settings.shareWorkouts).toBe(false);
   });
 
   test("preserves an already-set shareWorkouts flag", () => {
