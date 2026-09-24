@@ -176,7 +176,7 @@ export default function ProgressPage() {
             aria-label="start weight"
           />
           <button className="btn sm" onClick={() => adjustStart(0.5)} aria-label="raise start weight">+</button>
-          <span className="chip" style={{ marginLeft: "auto" }}>baseline</span>
+          <span className="chip">baseline</span>
         </div>
         <div className="goalrow">
           <span className="goallbl">GOAL</span>
@@ -194,7 +194,6 @@ export default function ProgressPage() {
           <span
             className="chip"
             style={{
-              marginLeft: "auto",
               color: cut ? "var(--gold)" : "var(--accent)",
               borderColor: cut ? "var(--gold)" : "var(--accent)",
             }}
@@ -215,7 +214,7 @@ export default function ProgressPage() {
             aria-label="height in cm"
           />
           <button className="btn sm" onClick={() => adjustHeight(1)} aria-label="raise height">+</button>
-          <span className="chip" style={{ marginLeft: "auto" }}>
+          <span className="chip">
             {cmToFtIn(heightCm)} · {Math.round(heightCm)} cm
           </span>
         </div>
@@ -254,27 +253,31 @@ export default function ProgressPage() {
       </section>
       </div>
 
-      {sessions.length > 0 && (
-        <div className="dash-secondary">
-        <div className="dashcard">
-          <div className="section-h">
-            <h2>Consistency</h2>
-            <span className="sub">
-              {strk ? (
-                <>
-                  <Icon name="flame" /> {strk}-day streak
-                </>
-              ) : (
-                "last 13 weeks"
-              )}
-            </span>
-          </div>
-          <section className="panel" style={{ padding: "14px 16px" }}>
-            <Heatmap sessions={sessions} today={today} />
-          </section>
+      <div className="dashcard wide">
+        <div className="section-h">
+          <h2>Consistency</h2>
+          <span className="sub">
+            {strk ? (
+              <>
+                <Icon name="flame" /> {strk}-day streak
+              </>
+            ) : (
+              "last 13 weeks"
+            )}
+          </span>
         </div>
+        <section className="panel" style={{ padding: "14px 16px" }}>
+          <Heatmap sessions={sessions} today={today} />
+          {sessions.length === 0 && (
+            <div className="wtrend-hint">
+              Your training consistency fills in here as you log sessions.
+            </div>
+          )}
+        </section>
+      </div>
 
-        {sessions.length >= 2 && (
+      {sessions.length >= 2 && (
+        <div className="dash-secondary">
         <div className="dashcard">
           <div className="section-h">
             <h2>Weekly volume</h2>
@@ -284,7 +287,6 @@ export default function ProgressPage() {
             <VolumeChart sessions={sessions} today={today} />
           </section>
         </div>
-        )}
         </div>
       )}
 

@@ -9,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { Icon } from "@/data/icons";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { useAuth, signInWithGoogle } from "@/lib/auth";
 import { useMyProfile } from "@/lib/useMyProfile";
 import { relativeTime } from "@/lib/sync/relativeTime";
@@ -18,6 +19,7 @@ import {
   toggleLike,
   addComment,
   deleteComment,
+  deleteActivity,
   sessionActivityText,
   type FeedItem,
   type FeedComment,
@@ -129,7 +131,15 @@ function Comments({
 }
 
 /* ---- one feed card ---- */
-function FeedCard({ item, myId }: { item: FeedItem; myId: string | null }) {
+function FeedCard({
+  item,
+  myId,
+  onDelete,
+}: {
+  item: FeedItem;
+  myId: string | null;
+  onDelete: (item: FeedItem) => void;
+}) {
   const [liked, setLiked] = useState(item.likedByMe);
   const [likeCount, setLikeCount] = useState(item.likeCount);
   const [commentCount, setCommentCount] = useState(item.commentCount);
@@ -140,6 +150,7 @@ function FeedCard({ item, myId }: { item: FeedItem; myId: string | null }) {
   const name = authorName(item.author);
   const handle = item.author?.username ?? null;
   const rel = relativeTime(new Date(item.created_at).getTime(), now);
+  const mine = !!myId && item.user_id === myId;
 
   const onLike = async () => {
     if (likeBusy) return;
@@ -175,6 +186,16 @@ function FeedCard({ item, myId }: { item: FeedItem; myId: string | null }) {
           </span>
         )}
         {rel && <span className="feed-time">{rel}</span>}
+        {mine && (
+          <button
+            className="feed-del"
+            aria-label="Delete post"
+            title="Delete post"
+            onClick={() => onDelete(item)}
+          >
+            <Icon name="trash" />
+          </button>
+        )}
       </header>
 
       <p className="feed-activity">{sessionActivityText(item.data)}</p>
@@ -213,6 +234,7 @@ function FeedCard({ item, myId }: { item: FeedItem; myId: string | null }) {
 export default function FeedPage() {
   const { status, user, loading } = useAuth();
   const { profile } = useMyProfile();
+  const confirm = useConfirm();
   const [items, setItems] = useState<FeedItem[]>([]);
   const [feedLoading, setFeedLoading] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -257,6 +279,31 @@ export default function FeedPage() {
   };
 
   const myId = profile?.id ?? user?.id ?? null;
+
+  // Delete one of my own posts: confirm → optimistically drop it from the list →
+  // rollback (and surface an error dialog) if the write fails.
+  const onDelete = async (item: FeedItem) => {
+    const ok = await confirm({
+      title: "Delete post?",
+      message: "This removes it from the feed for everyone, along with its likes and comments.",
+      danger: true,
+      confirmLabel: "Delete",
+    });
+    if (!ok) return;
+
+    const prev = items;
+    setItems((cur) => cur.filter((x) => x.id !== item.id));
+    const res = await deleteActivity(item.id);
+    if (!res.ok) {
+      setItems(prev); // rollback
+      await confirm({
+        title: "Couldn't delete post",
+        message: res.error,
+        confirmLabel: "OK",
+        cancelLabel: "Close",
+      });
+    }
+  };
 
   // --- unconfigured: no backend on this device ---
   if (status === "unconfigured") {
@@ -314,7 +361,7 @@ export default function FeedPage() {
 
       <div className="feed-list">
         {items.map((it) => (
-          <FeedCard key={it.id} item={it} myId={myId} />
+          <FeedCard key={it.id} item={it} myId={myId} onDelete={onDelete} />
         ))}
       </div>
 

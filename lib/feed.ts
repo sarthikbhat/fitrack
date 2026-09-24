@@ -166,6 +166,26 @@ export async function deleteActivityForSession(sessionId: string): Promise<Simpl
 }
 
 /**
+ * Delete one of your own feed posts by its activity id. Owner-scoped in the query
+ * (user_id = current uid) and enforced again by RLS. Cascade removes the row's
+ * likes/comments. Guards signed-out/unconfigured and ignores the missing-table
+ * error / absent rows silently. Used by the feed's per-post delete control.
+ */
+export async function deleteActivity(activityId: string): Promise<SimpleResult> {
+  const sb = getSupabase();
+  if (!sb) return { ok: false, error: SIGN_IN };
+  const uid = await currentUserId(sb);
+  if (!uid) return { ok: false, error: SIGN_IN };
+  if (!activityId) return { ok: true };
+
+  const { error } = await sb.from("activity").delete().eq("id", activityId).eq("user_id", uid);
+  if (error && error.code !== "42P01") {
+    return { ok: false, error: "Couldn't delete that post. Try again." };
+  }
+  return { ok: true };
+}
+
+/**
  * Toggle a like for the signed-in user (idempotent). We check current state, then
  * insert or delete. A duplicate insert (race) is treated as success.
  */
