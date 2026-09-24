@@ -34,6 +34,14 @@ export function Sidebar() {
       </nav>
       <div className="snav-foot">
         <Link
+          href="/feed"
+          className={`snav-item${path === "/feed" ? " active" : ""}`}
+          aria-current={path === "/feed" ? "page" : undefined}
+        >
+          <Icon name="feed" />
+          <span>Feed</span>
+        </Link>
+        <Link
           href="/people"
           className={`snav-item${path === "/people" ? " active" : ""}`}
           aria-current={path === "/people" ? "page" : undefined}

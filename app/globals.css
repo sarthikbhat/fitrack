@@ -3981,3 +3981,271 @@ main .libgrid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* =============================================================================
+   Social activity feed (/feed) + profile recent-activity list
+   Token-driven cards, like/comment controls, and comment list/input.
+   ============================================================================= */
+.feed-page {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.feed-head {
+  margin: 8px 2px 16px;
+}
+.feed-head .page-title {
+  font-family: var(--font-geist-sans);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+.feed-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* signed-out sign-in card */
+.feed-signin {
+  padding: 28px 22px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.feed-signin-title {
+  font-family: var(--font-geist-sans);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.feed-signin-sub {
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 340px;
+  line-height: 1.5;
+}
+.feed-signin .btn {
+  margin-top: 6px;
+  min-width: 200px;
+}
+.feed-signin-link {
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: none;
+  margin-top: 2px;
+}
+.feed-signin-link:hover {
+  text-decoration: underline;
+}
+
+/* empty + load-more */
+.feed-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+.feed-more {
+  width: 100%;
+  margin-top: 12px;
+}
+
+/* feed list + cards */
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+.feed-card {
+  padding: 16px;
+}
+.feed-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.feed-ident {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+  color: inherit;
+  text-decoration: none;
+}
+.feed-ident-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.feed-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.feed-handle {
+  font-size: 12px;
+  color: var(--muted);
+}
+.feed-time {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+.feed-activity {
+  margin: 12px 2px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* like / comment controls */
+.feed-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+.feed-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--line2);
+  border-radius: var(--rs);
+  background: var(--panel2);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.feed-act:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+.feed-act.liked {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.feed-act.liked svg {
+  fill: var(--danger);
+}
+.feed-act.on {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* comments */
+.feed-comments {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.feed-comment-empty {
+  font-size: 13px;
+  color: var(--dim);
+}
+.feed-comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.feed-comment-body {
+  min-width: 0;
+  flex: 1;
+}
+.feed-comment-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.feed-comment-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+}
+.feed-comment-time {
+  font-size: 11px;
+  color: var(--dim);
+}
+.feed-comment-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  margin-top: 2px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.feed-comment-del {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--rs);
+}
+.feed-comment-del:hover {
+  color: var(--danger);
+}
+.feed-comment-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.feed-comment-add .search {
+  flex: 1;
+  min-width: 0;
+}
+.feed-comment-add .btn {
+  flex-shrink: 0;
+}
+
+/* profile page: recent activity */
+.profile-activity {
+  margin-top: 22px;
+}
+.profile-section-title {
+  font-family: var(--font-geist-sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 2px 12px;
+}
+.profile-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.profile-activity-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+}
+.profile-activity-text {
+  font-size: 14px;
+  color: var(--text);
+  min-width: 0;
+}
+.profile-activity-date {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--dim);
+  white-space: nowrap;
+}

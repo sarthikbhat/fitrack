@@ -184,6 +184,7 @@ export type Store = State & {
   setTheme: (theme: "dark" | "light") => void;
   setRest: (sec: number) => void;
   setAutoRest: (on: boolean) => void;
+  setShareWorkouts: (on: boolean) => void;
   setSex: (sex: "male" | "female") => void;
   setAge: (age: number) => void;
   setActivity: (activity: 1 | 2 | 3 | 4 | 5) => void;
@@ -582,6 +583,7 @@ export const useStore = create<Store>()(
       setRest: (sec) =>
         set((s) => ({ settings: { ...s.settings, rest: Math.max(15, Math.min(600, Math.round(sec))) } })),
       setAutoRest: (on) => set((s) => ({ settings: { ...s.settings, autoRest: on } })),
+      setShareWorkouts: (on) => set((s) => ({ settings: { ...s.settings, shareWorkouts: on } })),
       setSex: (sex) => set((s) => ({ profile: { ...(s.profile ?? defaultProfile()), sex } })),
       setAge: (age) =>
         set((s) => ({ profile: { ...(s.profile ?? defaultProfile()), age: Math.max(13, Math.min(100, Math.round(age))) } })),
@@ -702,6 +704,7 @@ export const useStore = create<Store>()(
           setTheme: _st,
           setRest: _sr,
           setAutoRest: _sar,
+          setShareWorkouts: _ssw2,
           setSex: _ssx,
           setAge: _sag,
           setActivity: _sac,

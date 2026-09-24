@@ -6,7 +6,14 @@ import { Avatar } from "@/components/Avatar";
 import { ProfileFollow } from "@/components/ProfileFollow";
 import { getProfileByUsername } from "@/lib/profile";
 import { getFollowCounts } from "@/lib/social";
+import { getUserActivity, sessionActivityText } from "@/lib/feed";
 import { getServerSupabase } from "@/lib/supabaseServer";
+
+function activityDate(created_at: string): string {
+  const d = new Date(created_at);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
 
 function joinedLabel(created_at: string | null): string | null {
   if (!created_at) return null;
@@ -26,6 +33,7 @@ export default async function ProfilePage({
   if (!profile) notFound();
 
   const counts = await getFollowCounts(profile.id, server);
+  const activity = await getUserActivity(profile.id, server);
 
   const displayName = profile.display_name || profile.username || "Athlete";
   const joined = joinedLabel(profile.created_at);
@@ -48,8 +56,20 @@ export default async function ProfilePage({
 
       {profile.bio && <p className="profile-bio">{profile.bio}</p>}
 
-      <section className="profile-empty">
-        <p className="empty">Shared plans &amp; activity are coming soon.</p>
+      <section className="profile-activity">
+        <h2 className="profile-section-title">Recent activity</h2>
+        {activity.length === 0 ? (
+          <p className="empty">No activity yet.</p>
+        ) : (
+          <div className="profile-activity-list">
+            {activity.map((a) => (
+              <div key={a.id} className="profile-activity-row panel">
+                <span className="profile-activity-text">{sessionActivityText(a.data)}</span>
+                <span className="profile-activity-date">{activityDate(a.created_at)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </main>
   );

@@ -50,7 +50,7 @@ describe("applyPlan", () => {
 
   test("singleton replace: applies settings wholesale", () => {
     const state = emptyState();
-    const replacement: Settings = { rest: 999, autoRest: false };
+    const replacement: Settings = { rest: 999, autoRest: false, shareWorkouts: false };
     const unit: Unit = { table: "singletons", id: "settings", updatedAt: 30, data: replacement };
 
     const next = applyPlan(state, [unit]);

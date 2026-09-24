@@ -95,6 +95,7 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const setTheme = useStore((s) => s.setTheme);
   const setRest = useStore((s) => s.setRest);
   const setAutoRest = useStore((s) => s.setAutoRest);
+  const setShareWorkouts = useStore((s) => s.setShareWorkouts);
   const setSex = useStore((s) => s.setSex);
   const setAge = useStore((s) => s.setAge);
   const setActivity = useStore((s) => s.setActivity);
@@ -254,6 +255,17 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         <span>Auto-start rest after a set</span>
         <Toggle on={settings.autoRest} onChange={setAutoRest} ariaLabel="Auto-start rest" />
       </div>
+      <div className="srow">
+        <span>Share my workouts to the feed</span>
+        <Toggle
+          on={settings.shareWorkouts}
+          onChange={setShareWorkouts}
+          ariaLabel="Share my workouts to the feed"
+        />
+      </div>
+      <p className="shint" style={{ margin: "2px 0 0" }}>
+        When on, finished sessions are posted to your followers&apos; feed. Requires sign-in.
+      </p>
 
       <div className="srule" />
 

@@ -35,6 +35,7 @@ export type SessionSummary = {
 export type Settings = {
   rest: number; // seconds
   autoRest: boolean;
+  shareWorkouts: boolean; // opt-in: post finished sessions to the social feed
 };
 
 export type Goals = {

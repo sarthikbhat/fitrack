@@ -92,6 +92,14 @@ export function AccountControl({ variant }: { variant: "sidebar" | "header" }) {
         </button>
       )}
       <Link
+        href="/feed"
+        className="acct-menu-item"
+        role="menuitem"
+        onClick={() => setOpen(false)}
+      >
+        Feed
+      </Link>
+      <Link
         href="/people"
         className="acct-menu-item"
         role="menuitem"
