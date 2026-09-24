@@ -89,6 +89,11 @@ export function recordChanges(
 let meta: SyncMeta = emptySyncMeta();
 let lastSnapshot: Map<string, string> = new Map();
 let loaded = false;
+// Guard: until the snapshot baseline is primed (from the hydrated state), a diff
+// against the empty initial snapshot would mark EVERY unit dirty with `now`, making
+// stale local data win LWW and clobber the cloud. Until primed, trackChanges only
+// baselines and never stamps.
+let primed = false;
 
 /** Load persisted SyncMeta into the in-module memo (once). */
 export async function ensureSyncMetaLoaded(): Promise<SyncMeta> {
@@ -124,6 +129,15 @@ export function setLastSyncedAt(t: number): void {
  */
 export function trackChanges(state: State, now: number): string[] {
   const next = snapshotUnits(state);
+
+  // Not yet primed: just establish the baseline, never stamp. Prevents the
+  // empty-baseline diff from marking every unit dirty on cold start.
+  if (!primed) {
+    lastSnapshot = next;
+    primed = true;
+    return [];
+  }
+
   const { changed, deleted } = recordChanges(lastSnapshot, next, now);
 
   if (changed.length || deleted.length) {
@@ -157,4 +171,5 @@ export function stampUnits(updates: Record<string, UnitMeta>): void {
  */
 export function primeSnapshot(state: State): void {
   lastSnapshot = snapshotUnits(state);
+  primed = true;
 }

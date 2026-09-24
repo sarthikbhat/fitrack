@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useStore } from "@/lib/store";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { syncOnce } from "@/lib/sync/run";
+import { initSyncTracking } from "@/lib/sync/init";
 
 // Orchestrates the sync engine over the app lifecycle. Renders nothing. All triggers
 // funnel through syncOnce (serialized + coalesced) and runSync self-guards, so this
@@ -26,6 +27,13 @@ const INTERVAL_MS = 60_000;
 
 export function SyncManager() {
   const userId = useStore((s) => s.userId);
+
+  // Wire the persist-diff change tracker to the store ONCE. Without this, local
+  // edits are never stamped dirty, so nothing after the initial bootstrap ever
+  // pushes to the cloud (edits silently fail to sync across devices).
+  useEffect(() => {
+    return initSyncTracking();
+  }, []);
 
   useEffect(() => {
     const signedIn = isSupabaseConfigured() && userId !== "local";

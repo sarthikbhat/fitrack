@@ -4540,6 +4540,19 @@ main .libgrid {
   top: calc(100% + 8px);
   right: 0;
   width: min(340px, calc(100vw - 24px));
+}
+/* Mobile: the header notifications panel spans the viewport width. */
+@media (max-width: 560px) {
+  .notif-header .notif-panel {
+    position: fixed;
+    top: 60px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-width: none;
+  }
+}
+.notif-panel {
   max-height: min(70vh, 460px);
   overflow-y: auto;
   background: var(--panel);
