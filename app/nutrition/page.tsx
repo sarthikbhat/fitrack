@@ -14,10 +14,20 @@ import type { Food, LoggedMeal, MealItem, PlannedMeal } from "@/lib/types";
 import { Ring } from "@/components/exercise/Ring";
 import { Icon } from "@/data/icons";
 import { AddFoodSheet } from "@/components/nutrition/AddFoodSheet";
+import { useConfirm } from "@/components/ConfirmProvider";
+import { ShareButton } from "@/components/ShareButton";
 
-// The add-food sheet targets either a logged meal (day) or a plan meal (editor).
+// The add-food sheet targets a meal without writing to the store up-front: the
+// LoggedMeal is only created on the first actual add (see onAdd), so opening the
+// sheet never leaves an empty meal / stray delete icon behind.
+//  - log:         an existing logged meal - append items to it
+//  - newFromPlan: a plan slot with no logged meal yet - create (linked) on first add
+//  - newCustom:   a brand-new custom meal - create on first add
+//  - plan:        the plan editor - write straight into the recurring plan meal
 type SheetTarget =
   | { kind: "log"; mealId: string; title: string }
+  | { kind: "newFromPlan"; planMealId: string; name: string; title: string }
+  | { kind: "newCustom"; name: string; title: string }
   | { kind: "plan"; mealId: string; title: string };
 
 export default function NutritionPage() {
@@ -32,7 +42,9 @@ export default function NutritionPage() {
   const renameLoggedMeal = useStore((s) => s.renameLoggedMeal);
   const removeLoggedMeal = useStore((s) => s.removeLoggedMeal);
   const removeLoggedItem = useStore((s) => s.removeLoggedItem);
+  const pruneEmptyMeals = useStore((s) => s.pruneEmptyMeals);
   const addPlanItem = useStore((s) => s.addPlanItem);
+  const confirm = useConfirm();
 
   const [date, setDate] = useState(() => todayISO());
   const [editingPlan, setEditingPlan] = useState(false);
@@ -53,17 +65,61 @@ export default function NutritionPage() {
 
   const onAdd = (food: Food, qty: number, unit: string) => {
     if (!target) return;
-    if (target.kind === "log") logToMeal(date, target.mealId, { food, qty, unit });
-    else addPlanItem(target.mealId, { food, qty, unit });
+    const item = { food, qty, unit };
+    if (target.kind === "plan") {
+      addPlanItem(target.mealId, item);
+      return;
+    }
+    if (target.kind === "log") {
+      logToMeal(date, target.mealId, item);
+      return;
+    }
+    // Deferred targets: create the LoggedMeal now (first food), then append into it.
+    // Re-point the target at the freshly-created meal so further adds land in the same one.
+    const id =
+      target.kind === "newFromPlan" ? logDifferent(date, target.planMealId) : addCustomMeal(date, target.name);
+    logToMeal(date, id, item);
+    setTarget({ kind: "log", mealId: id, title: target.title });
+  };
+
+  const closeSheet = () => {
+    pruneEmptyMeals(date); // safety net: drop any zero-item meal before leaving the day
+    setTarget(null);
+  };
+
+  const askRemoveItem = async (mealId: string, entryId: string, mealName: string) => {
+    const ok = await confirm({
+      title: "Remove food?",
+      message: `Remove this food from ${mealName}?`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (ok) removeLoggedItem(date, mealId, entryId);
+  };
+  const askRemoveMeal = async (mealId: string, mealName: string) => {
+    const ok = await confirm({
+      title: "Remove meal?",
+      message: `"${mealName}" and its foods will be removed from this day.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (ok) removeLoggedMeal(date, mealId);
   };
 
   return (
     <main>
       <div className="section-h">
         <h2>Nutrition</h2>
-        <button className="btn sm ghost" onClick={() => setEditingPlan((e) => !e)}>
-          {editingPlan ? "Done" : "Edit plan"}
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <ShareButton
+            kind="nutrition"
+            label="Share plan"
+            getPayload={() => ({ title: "My meal plan", data: plan })}
+          />
+          <button className="btn sm ghost" onClick={() => setEditingPlan((e) => !e)}>
+            {editingPlan ? "Done" : "Edit plan"}
+          </button>
+        </div>
       </div>
 
       <div className="datebar">
@@ -98,18 +154,17 @@ export default function NutritionPage() {
                   key={pm.id}
                   meal={logged}
                   onAddFood={() => setTarget({ kind: "log", mealId: logged.id, title: `Add to ${logged.name}` })}
-                  onRemoveItem={(entryId) => removeLoggedItem(date, logged.id, entryId)}
-                  onRemoveMeal={() => removeLoggedMeal(date, logged.id)}
+                  onRemoveItem={(entryId) => askRemoveItem(logged.id, entryId, logged.name)}
+                  onRemoveMeal={() => askRemoveMeal(logged.id, logged.name)}
                 />
               ) : (
                 <PlanPlaceholder
                   key={pm.id}
                   meal={pm}
                   onAteThis={() => confirmPlanMeal(date, pm.id)}
-                  onLogFood={() => {
-                    const id = logDifferent(date, pm.id);
-                    setTarget({ kind: "log", mealId: id, title: `Log ${pm.name}` });
-                  }}
+                  onLogFood={() =>
+                    setTarget({ kind: "newFromPlan", planMealId: pm.id, name: pm.name, title: `Log ${pm.name}` })
+                  }
                 />
               );
             })}
@@ -121,18 +176,15 @@ export default function NutritionPage() {
                 editableName
                 onRename={(name) => renameLoggedMeal(date, m.id, name)}
                 onAddFood={() => setTarget({ kind: "log", mealId: m.id, title: `Add to ${m.name}` })}
-                onRemoveItem={(entryId) => removeLoggedItem(date, m.id, entryId)}
-                onRemoveMeal={() => removeLoggedMeal(date, m.id)}
+                onRemoveItem={(entryId) => askRemoveItem(m.id, entryId, m.name)}
+                onRemoveMeal={() => askRemoveMeal(m.id, m.name)}
               />
             ))}
 
             <button
               className="btn ghost addex"
               style={{ width: "100%", marginTop: 8 }}
-              onClick={() => {
-                const id = addCustomMeal(date, mealNameForTime());
-                setTarget({ kind: "log", mealId: id, title: "Add food" });
-              }}
+              onClick={() => setTarget({ kind: "newCustom", name: mealNameForTime(), title: "Add food" })}
             >
               <Icon name="plus" /> Add meal
             </button>
@@ -140,7 +192,7 @@ export default function NutritionPage() {
         </div>
       )}
 
-      {target && <AddFoodSheet title={target.title} onAdd={onAdd} onClose={() => setTarget(null)} />}
+      {target && <AddFoodSheet title={target.title} onAdd={onAdd} onClose={closeSheet} />}
     </main>
   );
 }
@@ -175,7 +227,7 @@ function LoggedMealCard({
         ) : (
           <span className="upper">{meal.name}</span>
         )}
-        <span className="cond mealgroup-kcal">{sub.kcal} kcal · {sub.p}g P</span>
+        <span className="cond mealgroup-kcal">{sub.kcal} kcal · {sub.p}g protein</span>
       </div>
 
       {meal.items.map((it) => (
@@ -186,16 +238,16 @@ function LoggedMealCard({
           </div>
           <div className="diaryrow-macros cond">
             <span className="diaryrow-kcal">{it.kcal} kcal</span>
-            <span className="mchip p">{it.p}P</span>
-            <span className="mchip c">{it.c}C</span>
-            <span className="mchip f">{it.f}F</span>
+            <span className="mchip p">Protein {it.p}g</span>
+            <span className="mchip c">Carbs {it.c}g</span>
+            <span className="mchip f">Fat {it.f}g</span>
           </div>
           <button className="delbtn" onClick={() => onRemoveItem(it.id)} aria-label="remove item">
             <Icon name="trash" />
           </button>
         </div>
       ))}
-      {meal.items.length === 0 && <div className="empty sm">No foods yet — add one below.</div>}
+      {meal.items.length === 0 && <div className="empty sm">No foods yet - add one below.</div>}
 
       <div className="meal-actions">
         <button className="btn sm ghost" onClick={onAddFood}><Icon name="plus" /> Add food</button>
@@ -220,7 +272,7 @@ function PlanPlaceholder({
     <section className="panel mealgroup planned">
       <div className="mealgroup-h">
         <span className="upper">{meal.name} <span className="planned-tag">planned</span></span>
-        {meal.items.length > 0 && <span className="cond mealgroup-kcal">{sub.kcal} kcal · {sub.p}g P</span>}
+        {meal.items.length > 0 && <span className="cond mealgroup-kcal">{sub.kcal} kcal · {sub.p}g protein</span>}
       </div>
       {meal.items.length > 0 ? (
         <div className="planned-items">{meal.items.map((it) => it.name).join(", ")}</div>
@@ -246,6 +298,26 @@ function PlanEditor({ onAddFood }: { onAddFood: (m: PlannedMeal) => void }) {
   const renamePlanMeal = useStore((s) => s.renamePlanMeal);
   const removePlanMeal = useStore((s) => s.removePlanMeal);
   const removePlanItem = useStore((s) => s.removePlanItem);
+  const confirm = useConfirm();
+
+  const askRemovePlanItem = async (mealId: string, itemId: string) => {
+    const ok = await confirm({
+      title: "Remove food?",
+      message: "This food will be removed from the recurring plan meal.",
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (ok) removePlanItem(mealId, itemId);
+  };
+  const askRemovePlanMeal = async (mealId: string, name: string) => {
+    const ok = await confirm({
+      title: "Remove meal?",
+      message: `"${name}" will be removed from your recurring plan.`,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (ok) removePlanMeal(mealId);
+  };
 
   return (
     <div className="plan-editor">
@@ -263,7 +335,7 @@ function PlanEditor({ onAddFood }: { onAddFood: (m: PlannedMeal) => void }) {
                 aria-label="plan meal name"
                 onBlur={(e) => renamePlanMeal(pm.id, e.target.value)}
               />
-              <span className="cond mealgroup-kcal">{sub.kcal} kcal · {sub.p}g P</span>
+              <span className="cond mealgroup-kcal">{sub.kcal} kcal · {sub.p}g protein</span>
             </div>
             {pm.items.map((it) => (
               <div className="diaryrow" key={it.id}>
@@ -273,9 +345,9 @@ function PlanEditor({ onAddFood }: { onAddFood: (m: PlannedMeal) => void }) {
                 </div>
                 <div className="diaryrow-macros cond">
                   <span className="diaryrow-kcal">{it.kcal} kcal</span>
-                  <span className="mchip p">{it.p}P</span>
+                  <span className="mchip p">Protein {it.p}g</span>
                 </div>
-                <button className="delbtn" onClick={() => removePlanItem(pm.id, it.id)} aria-label="remove food">
+                <button className="delbtn" onClick={() => askRemovePlanItem(pm.id, it.id)} aria-label="remove food">
                   <Icon name="trash" />
                 </button>
               </div>
@@ -283,7 +355,7 @@ function PlanEditor({ onAddFood }: { onAddFood: (m: PlannedMeal) => void }) {
             {pm.items.length === 0 && <div className="empty sm">No foods yet.</div>}
             <div className="meal-actions">
               <button className="btn sm ghost" onClick={() => onAddFood(pm)}><Icon name="plus" /> Add food</button>
-              <button className="btn sm ghost danger" onClick={() => removePlanMeal(pm.id)} aria-label="remove meal"><Icon name="trash" /></button>
+              <button className="btn sm ghost danger" onClick={() => askRemovePlanMeal(pm.id, pm.name)} aria-label="remove meal"><Icon name="trash" /></button>
             </div>
           </section>
         );

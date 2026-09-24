@@ -11,7 +11,7 @@ export type Logged = Record<string, Record<string, LoggedSet[]>>;
 
 /**
  * The days of the currently-active program, or the hardcoded PLAN as a SAFE FALLBACK.
- * With an empty registry (no active program) the app behaves exactly as before —
+ * With an empty registry (no active program) the app behaves exactly as before -
  * so plannedForToday / dayById route through this to stay program-aware.
  */
 export function activeDays(state: {
@@ -144,7 +144,7 @@ export function exDone(sets: LoggedSet[]): number {
   return sets.filter((s) => s.done).length;
 }
 
-/** Build a session summary from a day's logged sets — total done sets + volume (legacy:2289-2298). */
+/** Build a session summary from a day's logged sets - total done sets + volume (legacy:2289-2298). */
 export function sessionFromDay(
   logged: Logged,
   date: string,

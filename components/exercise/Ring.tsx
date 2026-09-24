@@ -4,7 +4,7 @@ export function Ring({ pct }: { pct: number }) {
     c = 2 * Math.PI * r,
     off = c * (1 - pct / 100);
   return (
-    <div className="ring" style={{ width: 74, height: 74 }}>
+    <div className="pring" style={{ width: 74, height: 74 }}>
       <svg width="74" height="74" viewBox="0 0 74 74">
         <circle cx="37" cy="37" r="30" fill="none" stroke="var(--line2)" strokeWidth="6" />
         <circle

@@ -4,7 +4,7 @@
 // local foods (custom/seed) with debounced OpenFoodFacts results, plus a custom
 // food path. Pick a food → portion picker with a live macro preview → Add, which
 // calls `onAdd(food, qty, unit)` into the caller-supplied target (a logged meal
-// or a plan meal). The sheet stays open after an Add ("Added ✓ — add another")
+// or a plan meal). The sheet stays open after an Add ("Added ✓ - add another")
 // so several items land in one meal fast; Done closes it.
 import { useEffect, useMemo, useState } from "react";
 import { useStore } from "@/lib/store";
@@ -100,8 +100,8 @@ export function AddFoodSheet({
 
   const choose = (f: Food) => {
     setPicked(f);
-    setQty(1);
-    setUnit(f.servings[0]?.label ?? f.base); // default to a named serving when there is one
+    setQty(1); // always start at one portion, never blank
+    setUnit(f.base); // default to the base unit (g/ml); named servings remain selectable
   };
 
   const createAndContinue = () => {
@@ -181,7 +181,23 @@ export function AddFoodSheet({
     const m = macroFor(picked, qty, unit);
     const pk = m.p * 4, ck = m.c * 4, fk = m.f * 9;
     const tot = pk + ck + fk || 1;
-    const units = [picked.base, ...picked.servings.map((s) => s.label)];
+    // Unit list = base unit (g/ml) + only genuine, distinct serving labels.
+    // Guard against serving labels that are empty, duplicate the base, or repeat
+    // the food's own name (some seed foods, e.g. Apple → serving "apple").
+    const base = picked.base;
+    const name = picked.name.trim().toLowerCase();
+    const units = [
+      base,
+      ...picked.servings
+        .map((s) => s.label.trim())
+        .filter(
+          (label, i, arr) =>
+            label &&
+            label.toLowerCase() !== base.toLowerCase() &&
+            label.toLowerCase() !== name &&
+            arr.indexOf(label) === i,
+        ),
+    ];
 
     return (
       <Sheet title={picked.name} hint={picked.brand} onClose={onClose}>
@@ -193,13 +209,13 @@ export function AddFoodSheet({
             <button className="stepbtn" onClick={() => setQty((n) => Math.round((n + step(unit)) * 100) / 100)} aria-label="more">+</button>
           </div>
           <select className="cell unitsel" value={unit} onChange={(e) => setUnit(e.target.value)}>
-            {units.map((u) => <option key={u} value={u}>{u}</option>)}
+            {units.map((u) => <option key={u} value={u}>{unitLabel(u, base)}</option>)}
           </select>
         </div>
 
         <div className="preview">
           <div className="preview-line">
-            <b className="cond">{fmt(grams)} {picked.base}</b>
+            <b className="cond">{fmt(grams)} {unitLabel(picked.base, picked.base)}</b>
             <span className="preview-kcal cond">{m.kcal} kcal</span>
           </div>
           <div className="propbar" role="img" aria-label={`${m.p}g protein, ${m.c}g carbs, ${m.f}g fat`}>
@@ -208,9 +224,9 @@ export function AddFoodSheet({
             <i style={{ width: `${(fk / tot) * 100}%`, background: "var(--macro-f)" }} />
           </div>
           <div className="chips">
-            <span className="mchip p">{m.p} P</span>
-            <span className="mchip c">{m.c} C</span>
-            <span className="mchip f">{m.f} F</span>
+            <span className="mchip p">Protein {m.p}g</span>
+            <span className="mchip c">Carbs {m.c}g</span>
+            <span className="mchip f">Fat {m.f}g</span>
           </div>
         </div>
 
@@ -223,15 +239,25 @@ export function AddFoodSheet({
   }
 
   // ----- search / list -----
+  const needle = q.trim();
+  const openCustom = (prefill = "") => {
+    setForm({ ...emptyForm, name: prefill });
+    setCustomMode(true);
+  };
+  // One unified list: local foods first, then OpenFoodFacts, no source sections.
+  const noResults = local.length === 0 && offResults.length === 0 && !offLoading;
+
   return (
     <Sheet title={title} onClose={onClose}>
       {addedCount > 0 && (
-        <div className="afs-added">Added ✓ — add another, or Done when finished.</div>
+        <div className="afs-added">Added ✓ - add another, or Done when finished.</div>
       )}
-      <input className="search" value={q} autoFocus autoComplete="off" placeholder="Search foods…"
+      <input className="search" value={q} autoFocus autoComplete="off"
+        placeholder="Search foods - or add your own below"
         onChange={(e) => setQ(e.target.value)} />
-      <button className="btn ghost custom-cta" onClick={() => setCustomMode(true)}>
-        <Icon name="plus" /> Custom food
+      {/* Always-visible discoverability entry; the empty-state CTA is the emphasis. */}
+      <button className="btn ghost custom-cta" onClick={() => openCustom(needle)}>
+        <Icon name="plus" /> Add custom food
       </button>
 
       <div className="foodlist">
@@ -244,28 +270,32 @@ export function AddFoodSheet({
             <span className="foodrow-kcal cond">{f.kcal} kcal · {f.p}P /100{f.base}</span>
           </button>
         ))}
-        {local.length === 0 && offResults.length === 0 && !offLoading && (
-          <div className="empty">No local foods match “{q}”. Try a custom food{online ? " or OpenFoodFacts" : ""}.</div>
-        )}
-
-        {/* OpenFoodFacts section */}
-        <div className="off-head">
-          <span className="upper">OpenFoodFacts</span>
-          {!online && <span className="off-note">needs connection</span>}
-          {online && offLoading && <span className="off-note">searching…</span>}
-        </div>
         {online &&
           offResults.map((f) => (
             <button key={f.id} className="foodrow" onClick={() => choose(f)}>
               <div className="foodrow-main">
                 <span className="foodrow-name">{f.name}</span>
-                <span className="foodrow-tag off">OFF</span>
               </div>
               <span className="foodrow-kcal cond">{f.kcal} kcal · {f.p}P /100{f.base}</span>
             </button>
           ))}
-        {online && !offLoading && q.trim().length >= 2 && offResults.length === 0 && (
-          <div className="off-note off-empty">No OpenFoodFacts matches.</div>
+
+        {online && offLoading && (
+          <div className="foodrow-loading">
+            <span className="spinner" aria-hidden /> Searching more foods…
+          </div>
+        )}
+
+        {noResults && needle.length >= 2 && (
+          <div className="nofood">
+            <p className="nofood-msg">No foods found for “{needle}”.</p>
+            <button className="btn primary nofood-cta" onClick={() => openCustom(needle)}>
+              <Icon name="plus" /> Add “{needle}” as a custom food
+            </button>
+          </div>
+        )}
+        {noResults && needle.length < 2 && (
+          <div className="empty sm">Type at least 2 characters to search more foods.</div>
         )}
       </div>
 
@@ -282,4 +312,13 @@ function step(unit: string): number {
 }
 function fmt(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+// Friendlier display for the base units; serving labels pass through unchanged.
+// The VALUE stays g/ml/serving-label (macro math depends on it) - this is display only.
+function unitLabel(u: string, base: string): string {
+  if (u === base) {
+    if (base === "g") return "grams";
+    if (base === "ml") return "millilitres";
+  }
+  return u;
 }

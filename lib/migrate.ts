@@ -30,7 +30,7 @@ export function emptyState(): State {
     workouts: [],
     sessions: [],
     logged: {},
-    settings: { rest: 90, autoRest: true },
+    settings: { rest: 90, autoRest: true, shareWorkouts: true },
     notes: {},
     added: {},
     removed: {},
@@ -66,6 +66,12 @@ function reshape(s: Record<string, unknown>): State {
   s.diary = migrateDiary(s.diary);
   const plan = s.plan as Plan | undefined;
   if (!plan || typeof plan !== "object" || !Array.isArray(plan.meals)) s.plan = starterPlan();
+  // Passthrough for the feed toggle: older blobs carry a settings object without
+  // `shareWorkouts`, so default it to true (sharing on by default).
+  const settings = s.settings as Partial<State["settings"]> | undefined;
+  if (settings && typeof settings === "object" && typeof settings.shareWorkouts !== "boolean") {
+    s.settings = { ...settings, shareWorkouts: true } as State["settings"];
+  }
   delete s.eaten;
   delete s.mealAdd;
   delete s.mealEdit;
@@ -205,7 +211,7 @@ export function defaultProfile(): Profile {
     activity: 3,
     units: { mass: "kg", len: "cm", energy: "kcal" },
     theme: "dark",
-    accent: "#2BE38B",
+    accent: "#3b82f6",
     startDay: 1,
   };
 }

@@ -21,7 +21,7 @@ export function parseImport(json: string): State {
     throw new Error("That file isn't a valid Fitrack backup.");
   }
 
-  // Reject blobs written by a newer app version — we can't safely downgrade them.
+  // Reject blobs written by a newer app version - we can't safely downgrade them.
   const v = (blob as { v?: unknown }).v;
   if (typeof v === "number" && v > CURRENT_VERSION) {
     throw new Error("This backup is from a newer version of Fitrack.");

@@ -1,0 +1,37 @@
+# Backup Supabase keep-alive pinger.
+#
+# The Vercel cron (vercel.json) is the primary daily ping. This workflow is an
+# independent backup so one platform failing does not let the free-tier Supabase
+# project auto-pause after 7 idle days. It runs on a different hour than Vercel.
+#
+# Two repository secrets must be configured (Settings → Secrets and variables →
+# Actions) for this to do anything:
+#   KEEPALIVE_URL  = the deployed endpoint, e.g. https://<app>.vercel.app/api/keepalive
+#   CRON_SECRET    = the same value set as CRON_SECRET in Vercel (bearer token)
+#
+# Until both are set the job runs but skips the request with a notice, so it
+# never fails a red build before the user has configured things.
+name: keepalive
+
+on:
+  schedule:
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping keep-alive endpoint
+        env:
+          KEEPALIVE_URL: ${{ secrets.KEEPALIVE_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+        run: |
+          if [ -z "$KEEPALIVE_URL" ]; then
+            echo "KEEPALIVE_URL secret not set - skipping ping."
+            exit 0
+          fi
+          echo "Pinging $KEEPALIVE_URL"
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            "$KEEPALIVE_URL"

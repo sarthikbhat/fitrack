@@ -71,7 +71,7 @@ export function ExerciseModal({
   const closeRef = useRef<HTMLButtonElement>(null);
 
   // Re-peek the cached record synchronously when the exercise changes (adjust-during-render,
-  // not an effect — avoids a cascading set-state-in-effect render).
+  // not an effect - avoids a cascading set-state-in-effect render).
   const [prevName, setPrevName] = useState(name);
   if (prevName !== name) {
     setPrevName(name);
@@ -174,7 +174,7 @@ export function ExerciseModal({
     ...secondary.map((v) => ({ value: v, param: "targetMuscles" as const })),
   ].filter((c) => c.value);
   // When EDB detail loaded (id-open, or name-open where matchEdb resolved), the EDB chips
-  // above are the authoritative tags — suppress the stale free-exercise-db metarow entirely.
+  // above are the authoritative tags - suppress the stale free-exercise-db metarow entirely.
   const hasEdbDetail = detailChips.length > 0;
   const instructions = edb?.instructions ?? [];
   const tips = edb?.exerciseTips ?? [];

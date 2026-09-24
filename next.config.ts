@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
 };
 
 // Serwist injects a *webpack* plugin. Next 16 dev defaults to Turbopack, which
-// errors when a webpack config is present — so apply Serwist ONLY for the
+// errors when a webpack config is present - so apply Serwist ONLY for the
 // production build (`next build --webpack`), and leave dev on clean Turbopack.
 const isDev = process.env.NODE_ENV === "development";
 

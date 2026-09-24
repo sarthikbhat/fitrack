@@ -6,7 +6,7 @@ import type { Food } from "@/lib/types";
 export type OffProduct = {
   code?: string | number;
   product_name?: string;
-  brands?: string;
+  brands?: string | string[]; // Search-a-licious returns an array; cgi returned a CSV string
   serving_size?: string;
   nutriments?: Record<string, number | string | undefined>;
 };
@@ -35,7 +35,8 @@ export function mapOffProduct(p: OffProduct): Food | null {
   if (!kcal && (proteins || carbs || fat)) kcal = Math.round(4 * proteins + 4 * carbs + 9 * fat);
   if (!kcal && !proteins && !carbs && !fat) return null; // no macros → skip
 
-  const brand = (p.brands ?? "").split(",")[0].trim();
+  const brandRaw = Array.isArray(p.brands) ? p.brands[0] : p.brands;
+  const brand = String(brandRaw ?? "").split(",")[0].trim();
   const displayName = brand ? `${name} (${brand})` : name;
 
   return {
@@ -60,8 +61,13 @@ export async function searchOff(q: string): Promise<Food[]> {
   try {
     const r = await fetch(`/api/off?q=${encodeURIComponent(term)}`);
     if (!r.ok) return [];
-    const data = (await r.json()) as { products?: OffProduct[] };
-    const products = Array.isArray(data?.products) ? data.products : [];
+    const data = (await r.json()) as { hits?: OffProduct[]; products?: OffProduct[] };
+    // Search-a-licious returns `hits`; keep `products` as a fallback.
+    const products = Array.isArray(data?.hits)
+      ? data.hits
+      : Array.isArray(data?.products)
+        ? data.products
+        : [];
     const foods: Food[] = [];
     for (const p of products) {
       const f = mapOffProduct(p);

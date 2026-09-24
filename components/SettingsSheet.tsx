@@ -1,17 +1,25 @@
 "use client";
 
-// Settings sheet — ports legacy renderSheet('settings') (legacy:2385-2420) plus the
+// Settings sheet - ports legacy renderSheet('settings') (legacy:2385-2420) plus the
 // export/import/resetAll data handlers (legacy:2328-2344, 2216). Reuses <Sheet>.
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sheet } from "@/components/Sheet";
+import { useConfirm } from "@/components/ConfirmProvider";
 import { Seg, Toggle } from "@/components/Controls";
 import { useStore } from "@/lib/store";
 import { todayISO } from "@/lib/dates";
+import { fmtMass, massFromDisplay, massLabel, type MassUnit } from "@/lib/units";
+import { useAuth, signInWithGoogle, signOut } from "@/lib/auth";
+import { deleteMyAccount } from "@/lib/account";
+import { ProfileEditor } from "@/components/ProfileEditor";
+import { useSyncStatus } from "@/lib/sync/status";
+import { relativeTime } from "@/lib/sync/relativeTime";
+import { syncOnce } from "@/lib/sync/run";
 
 const ACCENTS = [
+  { hex: "#3b82f6", name: "Blue" },
   { hex: "#10b981", name: "Emerald" },
   { hex: "#6366f1", name: "Indigo" },
-  { hex: "#3b82f6", name: "Blue" },
   { hex: "#f59e0b", name: "Amber" },
   { hex: "#f43f5e", name: "Rose" },
   { hex: "#8b5cf6", name: "Violet" },
@@ -29,13 +37,66 @@ function fmtRest(sec: number): string {
   return `${Math.floor(sec / 60)}:${`0${sec % 60}`.slice(-2)}`;
 }
 
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+// Compact label + editable value row for the Body section. Resyncs its local text
+// when the stored value changes (unit switch, external edit) via the signature guard.
+function EditRow({
+  label,
+  value,
+  suffix,
+  onCommit,
+}: {
+  label: string;
+  value: string;
+  suffix: string;
+  onCommit: (raw: string) => void;
+}) {
+  const [str, setStr] = useState(value);
+  const [prev, setPrev] = useState(value);
+  if (prev !== value) {
+    setPrev(value);
+    setStr(value);
+  }
+  return (
+    <div className="srow">
+      <span>{label}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <input
+          className="cell"
+          inputMode="decimal"
+          value={str}
+          onChange={(e) => setStr(e.target.value)}
+          onBlur={(e) => {
+            onCommit(e.target.value);
+            setStr(value);
+          }}
+          onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+          style={{ maxWidth: 88 }}
+          aria-label={label}
+        />
+        <span className="cond" style={{ fontSize: 12, color: "var(--dim)", minWidth: 18 }}>
+          {suffix}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const profile = useStore((s) => s.profile);
   const settings = useStore((s) => s.settings);
+  const bodyData = useStore((s) => s.body);
+  const heightCm = useStore((s) => s.profile?.heightCm ?? 170);
+  const setBw = useStore((s) => s.setBw);
+  const setGoal = useStore((s) => s.setGoal);
+  const setStartWeight = useStore((s) => s.setStartWeight);
+  const setHeight = useStore((s) => s.setHeight);
   const setUnitsMass = useStore((s) => s.setUnitsMass);
   const setTheme = useStore((s) => s.setTheme);
   const setRest = useStore((s) => s.setRest);
   const setAutoRest = useStore((s) => s.setAutoRest);
+  const setShareWorkouts = useStore((s) => s.setShareWorkouts);
   const setSex = useStore((s) => s.setSex);
   const setAge = useStore((s) => s.setAge);
   const setActivity = useStore((s) => s.setActivity);
@@ -46,8 +107,23 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const importState = useStore((s) => s.importState);
   const resetAll = useStore((s) => s.resetAll);
 
+  const { email, status, loading } = useAuth();
+  const sync = useSyncStatus();
+  const confirm = useConfirm();
+
   const fileRef = useRef<HTMLInputElement>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [delErr, setDelErr] = useState<string | null>(null);
+
+  // Tick the clock so the "· 2m ago" suffix stays fresh while the sheet is open.
+  // Lazy init keeps Date.now() out of render (impure-in-render); the interval is
+  // cleaned up on unmount.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const mass = profile?.units.mass ?? "kg";
   const theme = profile?.theme ?? "dark";
@@ -56,6 +132,17 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const activity = String(profile?.activity ?? 3);
   const accent = profile?.accent ?? ACCENTS[0].hex;
   const startDay = profile?.startDay ?? 1;
+  const massU = mass as MassUnit;
+
+  // Body editors. Mass fields convert display→kg; current weight logs today's entry.
+  const commitMass = (setter: (kg: number) => void) => (raw: string) => {
+    const n = parseFloat(raw);
+    if (!isNaN(n)) setter(round2(massFromDisplay(n, massU)));
+  };
+  const commitHeight = (raw: string) => {
+    const n = parseInt(raw, 10);
+    if (!isNaN(n)) setHeight(Math.round(n));
+  };
 
   const onExport = () => {
     const blob = new Blob([exportState()], { type: "application/json" });
@@ -84,11 +171,64 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
     rd.readAsText(file);
   };
 
-  const onErase = () => {
-    if (window.confirm("Erase ALL Fitrack data on this device? This cannot be undone.")) {
+  // Live sync chip: map the engine status → label + tone. signed-out/unconfigured
+  // render no chip (the account controls already convey that state).
+  const syncChip = (() => {
+    switch (sync.status) {
+      case "syncing":
+        return { label: "Syncing…", color: "var(--muted)", title: undefined as string | undefined };
+      case "idle": {
+        const rel = relativeTime(sync.lastSyncedAt, now);
+        return { label: rel ? `Synced · ${rel}` : "Synced", color: "var(--accent)", title: undefined };
+      }
+      case "offline":
+        return { label: "Offline", color: "var(--muted)", title: undefined };
+      case "error":
+        return { label: "Sync error", color: "var(--danger)", title: sync.lastError ?? undefined };
+      default:
+        return null;
+    }
+  })();
+  const syncDisabled =
+    sync.status === "syncing" || sync.status === "signed-out" || sync.status === "unconfigured";
+
+  const onErase = async () => {
+    const ok = await confirm({
+      title: "Erase all data?",
+      message: "This permanently deletes everything on this device and can't be undone.",
+      confirmLabel: "Erase everything",
+      danger: true,
+    });
+    if (ok) {
       resetAll();
       onClose();
     }
+  };
+
+  const onSignOut = async () => {
+    const ok = await confirm({
+      title: "Sign out?",
+      message: "You'll stop syncing on this device. Your data stays saved locally.",
+      confirmLabel: "Sign out",
+    });
+    if (ok) void signOut();
+  };
+
+  const onDeleteAccount = async () => {
+    const ok = await confirm({
+      title: "Delete account?",
+      message:
+        "This permanently deletes your account and all cloud data - profile, synced workouts and nutrition, follows, and posts. This cannot be undone.",
+      confirmLabel: "Delete account",
+      danger: true,
+    });
+    if (!ok) return;
+    setDelErr(null);
+    setDeleting(true);
+    const res = await deleteMyAccount();
+    setDeleting(false);
+    if (res.ok) onClose();
+    else setDelErr(res.error);
   };
 
   return (
@@ -135,6 +275,17 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
         <span>Auto-start rest after a set</span>
         <Toggle on={settings.autoRest} onChange={setAutoRest} ariaLabel="Auto-start rest" />
       </div>
+      <div className="srow">
+        <span>Share my workouts to the feed</span>
+        <Toggle
+          on={settings.shareWorkouts}
+          onChange={setShareWorkouts}
+          ariaLabel="Share my workouts to the feed"
+        />
+      </div>
+      <p className="shint" style={{ margin: "2px 0 0" }}>
+        When on, finished sessions are posted to your followers&apos; feed. Requires sign-in.
+      </p>
 
       <div className="srule" />
 
@@ -188,6 +339,37 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
 
       <div className="srule" />
 
+      <label className="flbl">Body</label>
+      <p className="shint" style={{ margin: "4px 0 8px" }}>
+        Stored on this device. Current weight logs today&apos;s entry.
+      </p>
+      <EditRow
+        label="Start weight"
+        value={fmtMass(bodyData.startWeight, massU)}
+        suffix={massLabel(massU)}
+        onCommit={commitMass(setStartWeight)}
+      />
+      <EditRow
+        label="Current weight"
+        value={fmtMass(bodyData.bw, massU)}
+        suffix={massLabel(massU)}
+        onCommit={commitMass(setBw)}
+      />
+      <EditRow
+        label="Goal weight"
+        value={fmtMass(bodyData.goalWeight, massU)}
+        suffix={massLabel(massU)}
+        onCommit={commitMass(setGoal)}
+      />
+      <EditRow
+        label="Height"
+        value={String(Math.round(heightCm))}
+        suffix="cm"
+        onCommit={commitHeight}
+      />
+
+      <div className="srule" />
+
       <div className="srow">
         <span>Accent</span>
         <div className="swatches">
@@ -216,6 +398,82 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           ]}
         />
       </div>
+
+      <div className="srule" />
+
+      <label className="flbl">Account</label>
+      {status === "unconfigured" && (
+        <p className="shint" style={{ margin: "4px 0 0" }}>
+          Cloud sync not configured yet.
+        </p>
+      )}
+      {status === "signed-out" && (
+        <>
+          <button
+            className="btn"
+            style={{ width: "100%", marginTop: 4 }}
+            disabled={loading}
+            onClick={() => signInWithGoogle()}
+          >
+            Sign in with Google
+          </button>
+          <p className="shint">Sync your data across devices.</p>
+        </>
+      )}
+      {status === "signed-in" && (
+        <>
+          <div className="srow" style={{ marginTop: 4 }}>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {email ?? "Signed in"}
+            </span>
+            {syncChip && (
+              <span
+                className="chip"
+                title={syncChip.title}
+                style={{ color: syncChip.color, borderColor: syncChip.color }}
+              >
+                {syncChip.label}
+              </span>
+            )}
+          </div>
+          <button
+            className="btn"
+            style={{ width: "100%", marginTop: 8 }}
+            disabled={syncDisabled}
+            onClick={() => syncOnce()}
+          >
+            {sync.status === "syncing" ? "Syncing…" : "Sync now"}
+          </button>
+          <button
+            className="btn ghost"
+            style={{ width: "100%", marginTop: 8 }}
+            onClick={onSignOut}
+          >
+            Sign out
+          </button>
+
+          <div className="srule" />
+          <label className="flbl">Edit profile</label>
+          <ProfileEditor />
+
+          <div className="srule" />
+          <label className="flbl" style={{ color: "var(--danger)" }}>Danger zone</label>
+          <button
+            className="btn ghost"
+            style={{ width: "100%", marginTop: 4, color: "var(--danger)", borderColor: "var(--line2)" }}
+            disabled={deleting}
+            onClick={onDeleteAccount}
+          >
+            {deleting ? "Deleting…" : "Delete account"}
+          </button>
+          <p className="shint" style={{ marginTop: 8 }}>
+            Permanently removes your account and all cloud data. Local data on this device is cleared too.
+          </p>
+          {delErr && (
+            <p className="shint" style={{ color: "var(--danger)", marginTop: 8 }}>{delErr}</p>
+          )}
+        </>
+      )}
 
       <div className="srule" />
 

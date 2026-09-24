@@ -12,7 +12,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Generated service worker (serwist build output of app/sw.ts) — not hand-written source.
+    // Generated service worker (serwist build output of app/sw.ts) - not hand-written source.
     "public/sw.js",
     // Legacy pre-Next single-file app, kept for reference only.
     "legacy/**",

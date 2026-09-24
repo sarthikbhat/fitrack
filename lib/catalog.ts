@@ -16,7 +16,7 @@ import { allExdb, cdnImg, loadExdb, norm, toks } from "@/lib/exdb";
 const CATALOG_KEY = "fitrack-edb-catalog";
 
 export type CatalogItem = {
-  key: string; // normName(name) — the dedupe key
+  key: string; // normName(name) - the dedupe key
   name: string;
   img: string;
   muscles: string[]; // canonical lowercase groups
@@ -197,7 +197,7 @@ function build(): void {
         key,
         name: a.name,
         img: a.imageUrl || "",
-        // Primary (target) muscles only — secondary muscles would make e.g. a
+        // Primary (target) muscles only - secondary muscles would make e.g. a
         // Triceps filter surface Bench Press (primary chest) and look wrong.
         muscles: dedupe(a.targetMuscles.map((m) => toMuscleGroup(m))),
         equipment: dedupe(a.equipments.map(normEquip)),

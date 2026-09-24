@@ -10,6 +10,9 @@ import { Sparkline } from "@/components/Sparkline";
 import { Heatmap } from "@/components/Heatmap";
 import { VolumeChart } from "@/components/VolumeChart";
 import { Icon } from "@/data/icons";
+import { useConfirm } from "@/components/ConfirmProvider";
+import { useAuth } from "@/lib/auth";
+import { deleteActivityForSession } from "@/lib/feed";
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 const shortDate = (iso: string) =>
@@ -23,8 +26,11 @@ export default function ProgressPage() {
   const unit = useStore((s) => (s.profile?.units.mass ?? "kg") as MassUnit);
   const setBw = useStore((s) => s.setBw);
   const setGoal = useStore((s) => s.setGoal);
+  const setStartWeight = useStore((s) => s.setStartWeight);
   const setHeight = useStore((s) => s.setHeight);
   const deleteSession = useStore((s) => s.deleteSession);
+  const { status } = useAuth();
+  const confirm = useConfirm();
 
   const u = massLabel(unit);
   const today = todayISO();
@@ -61,17 +67,35 @@ export default function ProgressPage() {
   const strk = streak(sessions, today);
   const hist = sessions.slice(0, 20);
 
+  // Bodyweight trend: history is stored sorted by date, but sort defensively.
+  const wHist = [...body.history].sort((a, b) => a.date.localeCompare(b.date));
+  const hasTrend = wHist.length >= 2;
+  const trendPts = wHist.slice(-30).map((p) => ({ kg: massToDisplay(p.kg, unit) }));
+  let deltaTxt: string | null = null;
+  let deltaTowardGoal = false;
+  if (hasTrend) {
+    const prev = massToDisplay(wHist[wHist.length - 2].kg, unit);
+    const last = massToDisplay(wHist[wHist.length - 1].kg, unit);
+    const d = last - prev;
+    if (Math.abs(d) >= 0.05) {
+      deltaTxt = `${d > 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(1)} ${u} vs last entry`;
+      deltaTowardGoal = cut ? d < 0 : d > 0;
+    }
+  }
+
   // Local editable strings, resynced when the stored value or unit changes.
   // Uses the React "adjust state during render" pattern (a signature guard) rather than
   // effects, so store-driven changes reflect without cascading set-state-in-effect renders.
   const [bwStr, setBwStr] = useState(fmtMass(bwKg, unit));
+  const [startStr, setStartStr] = useState(fmtMass(startKg, unit));
   const [goalStr, setGoalStr] = useState(fmtMass(goalKg, unit));
   const [heightStr, setHeightStr] = useState(String(Math.round(heightCm)));
-  const sig = `${bwKg}|${goalKg}|${heightCm}|${unit}`;
+  const sig = `${bwKg}|${startKg}|${goalKg}|${heightCm}|${unit}`;
   const [prevSig, setPrevSig] = useState(sig);
   if (prevSig !== sig) {
     setPrevSig(sig);
     setBwStr(fmtMass(bwKg, unit));
+    setStartStr(fmtMass(startKg, unit));
     setGoalStr(fmtMass(goalKg, unit));
     setHeightStr(String(Math.round(heightCm)));
   }
@@ -80,6 +104,11 @@ export default function ProgressPage() {
     const n = parseFloat(v);
     if (isNaN(n)) return setBwStr(fmtMass(bwKg, unit));
     setBw(round2(massFromDisplay(n, unit)));
+  };
+  const commitStart = (v: string) => {
+    const n = parseFloat(v);
+    if (isNaN(n)) return setStartStr(fmtMass(startKg, unit));
+    setStartWeight(round2(massFromDisplay(n, unit)));
   };
   const commitGoal = (v: string) => {
     const n = parseFloat(v);
@@ -92,13 +121,14 @@ export default function ProgressPage() {
     setHeight(Math.round(n));
   };
   const adjustBw = (d: number) => setBw(round2(massFromDisplay(bw + d, unit)));
+  const adjustStart = (d: number) => setStartWeight(round2(massFromDisplay(start + d, unit)));
   const adjustGoal = (d: number) => setGoal(round2(massFromDisplay(goal + d, unit)));
   const adjustHeight = (d: number) => setHeight(Math.round(heightCm) + d);
 
   return (
     <main>
       <div className="dash">
-      <div className="dashcard">
+      <div className="dashcard wide">
       <div className="section-h">
         <h2>Bodyweight</h2>
         <span className="sub">{cut ? "cut" : "bulk"} target</span>
@@ -108,6 +138,8 @@ export default function ProgressPage() {
           {fmtMass(bwKg, unit)}
           <small> {u}</small>
         </div>
+        <div className="bwlog-lbl">Log today&apos;s weight</div>
+        <div className="bwlog-hint">Adjust below - it records today&apos;s entry and builds your trend.</div>
         <div className="bwedit">
           <button className="btn sm" onClick={() => adjustBw(-0.1)} aria-label="lower weight">–</button>
           <input
@@ -132,6 +164,21 @@ export default function ProgressPage() {
           <span>{rightTxt}</span>
         </div>
         <div className="goalrow">
+          <span className="goallbl">START WEIGHT</span>
+          <button className="btn sm" onClick={() => adjustStart(-0.5)} aria-label="lower start weight">–</button>
+          <input
+            className="cell"
+            inputMode="decimal"
+            value={startStr}
+            onChange={(e) => setStartStr(e.target.value)}
+            onBlur={(e) => commitStart(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+            aria-label="start weight"
+          />
+          <button className="btn sm" onClick={() => adjustStart(0.5)} aria-label="raise start weight">+</button>
+          <span className="chip">baseline</span>
+        </div>
+        <div className="goalrow">
           <span className="goallbl">GOAL</span>
           <button className="btn sm" onClick={() => adjustGoal(-0.5)} aria-label="lower goal">–</button>
           <input
@@ -147,7 +194,6 @@ export default function ProgressPage() {
           <span
             className="chip"
             style={{
-              marginLeft: "auto",
               color: cut ? "var(--gold)" : "var(--accent)",
               borderColor: cut ? "var(--gold)" : "var(--accent)",
             }}
@@ -168,11 +214,28 @@ export default function ProgressPage() {
             aria-label="height in cm"
           />
           <button className="btn sm" onClick={() => adjustHeight(1)} aria-label="raise height">+</button>
-          <span className="chip" style={{ marginLeft: "auto" }}>
+          <span className="chip">
             {cmToFtIn(heightCm)} · {Math.round(heightCm)} cm
           </span>
         </div>
-        <Sparkline pts={body.history.slice(-14).map((p) => ({ kg: massToDisplay(p.kg, unit) }))} />
+        <div className="wtrend">
+          <div className="wtrend-h">
+            <span className="wtrend-lbl">Weight trend</span>
+            {deltaTxt && (
+              <span
+                className="wtrend-delta"
+                style={{ color: deltaTowardGoal ? "var(--accent)" : "var(--muted)" }}
+              >
+                {deltaTxt}
+              </span>
+            )}
+          </div>
+          {hasTrend ? (
+            <Sparkline pts={trendPts} />
+          ) : (
+            <div className="wtrend-hint">Log your weight over a few days to see your trend.</div>
+          )}
+        </div>
         <div className="stat" style={{ marginTop: 6, gridTemplateColumns: "repeat(3,1fr)" }}>
           <div className="macro">
             <b className="cond" style={{ color: strk ? "var(--gold)" : "var(--dim)" }}>{strk}</b>
@@ -190,27 +253,31 @@ export default function ProgressPage() {
       </section>
       </div>
 
-      {sessions.length > 0 && (
-        <div className="dashcard">
-          <div className="section-h">
-            <h2>Consistency</h2>
-            <span className="sub">
-              {strk ? (
-                <>
-                  <Icon name="flame" /> {strk}-day streak
-                </>
-              ) : (
-                "last 13 weeks"
-              )}
-            </span>
-          </div>
-          <section className="panel" style={{ padding: "14px 16px" }}>
-            <Heatmap sessions={sessions} today={today} />
-          </section>
+      <div className="dashcard wide">
+        <div className="section-h">
+          <h2>Consistency</h2>
+          <span className="sub">
+            {strk ? (
+              <>
+                <Icon name="flame" /> {strk}-day streak
+              </>
+            ) : (
+              "last 13 weeks"
+            )}
+          </span>
         </div>
-      )}
+        <section className="panel" style={{ padding: "14px 16px" }}>
+          <Heatmap sessions={sessions} today={today} />
+          {sessions.length === 0 && (
+            <div className="wtrend-hint">
+              Your training consistency fills in here as you log sessions.
+            </div>
+          )}
+        </section>
+      </div>
 
       {sessions.length >= 2 && (
+        <div className="dash-secondary">
         <div className="dashcard">
           <div className="section-h">
             <h2>Weekly volume</h2>
@@ -219,6 +286,7 @@ export default function ProgressPage() {
           <section className="panel" style={{ padding: "14px 16px" }}>
             <VolumeChart sessions={sessions} today={today} />
           </section>
+        </div>
         </div>
       )}
 
@@ -241,8 +309,19 @@ export default function ProgressPage() {
               </div>
               <button
                 className="delbtn"
-                onClick={() => {
-                  if (confirm("Delete this session?")) deleteSession(h.id);
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: "Delete session?",
+                    message: `This removes "${h.name}" from ${shortDate(h.date)} and its logged sets. This can't be undone.`,
+                    confirmLabel: "Delete",
+                    danger: true,
+                  });
+                  if (ok) {
+                    deleteSession(h.id);
+                    // Remove the linked feed post too (activity id === session id).
+                    // Fire-and-forget, signed-in only; local delete already happened.
+                    if (status === "signed-in") deleteActivityForSession(h.id).catch(() => {});
+                  }
                 }}
                 aria-label="delete session"
               >
@@ -252,7 +331,7 @@ export default function ProgressPage() {
           ))
         ) : (
           <div className="empty">
-            Finish a session on the Train tab — your streak, heatmap, weekly volume and per-lift PRs build up here as
+            Finish a session on the Train tab - your streak, heatmap, weekly volume and per-lift PRs build up here as
             you log.
           </div>
         )}

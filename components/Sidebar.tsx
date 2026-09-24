@@ -4,12 +4,15 @@ import { usePathname } from "next/navigation";
 import { Icon } from "@/data/icons";
 import { NAV } from "@/lib/nav";
 import { useSettings } from "@/components/SettingsProvider";
+import { AccountControl } from "@/components/AccountControl";
+import { useAuth } from "@/lib/auth";
 
 // Desktop-only left rail. Hidden < 900px via CSS (.sidebar); the mobile BottomNav
 // covers the same routes. Purely CSS-toggled, so it renders on server + client alike.
 export function Sidebar() {
   const path = usePathname();
   const { openSettings } = useSettings();
+  const { status } = useAuth();
   return (
     <aside className="sidebar" aria-label="Primary">
       <Link href="/" className="sidebar-brand">
@@ -31,10 +34,36 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
-      <button className="snav-item snav-foot" onClick={openSettings}>
-        <Icon name="gear" />
-        <span>Settings</span>
-      </button>
+      <div className="snav-foot">
+        <Link
+          href="/feed"
+          className={`snav-item${path === "/feed" ? " active" : ""}`}
+          aria-current={path === "/feed" ? "page" : undefined}
+        >
+          <Icon name="feed" />
+          <span>Feed</span>
+        </Link>
+        {status === "signed-in" && (
+          <Link
+            href="/people"
+            className={`snav-item${path === "/people" ? " active" : ""}`}
+            aria-current={path === "/people" ? "page" : undefined}
+          >
+            <Icon name="people" />
+            <span>Find people</span>
+          </Link>
+        )}
+        <button className="snav-item" onClick={openSettings}>
+          <Icon name="gear" />
+          <span>Settings</span>
+        </button>
+        <AccountControl variant="sidebar" />
+        <div className="snav-legal">
+          <Link href="/legal/privacy">Privacy</Link>
+          <span aria-hidden>·</span>
+          <Link href="/legal/terms">Terms</Link>
+        </div>
+      </div>
     </aside>
   );
 }

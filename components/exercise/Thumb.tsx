@@ -2,7 +2,7 @@
 
 // Exercise thumbnail (legacy `thumbHTML`/`framesHTML`/`initials`, 1579,1590-1599).
 // Coloured monogram fallback with the free-exercise-db still image layered on top
-// (single static frame — the animated loop lives only in the how-to modal).
+// (single static frame - the animated loop lives only in the how-to modal).
 // `how` adds a tap affordance that opens the exercise modal.
 import { mc } from "@/data/muscles";
 import { getEx, cdnImg, useExdbReady } from "@/lib/exdb";

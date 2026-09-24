@@ -39,8 +39,8 @@ export const MEALS: NutDay[] = [
     meals: [
       { id: "tue1", time: "08:00", slot: "Pre-workout", hl: true, items: "1 banana, 250 ml full-fat milk, 3 dates.", kcal: 320, p: 11 },
       { id: "tue2", time: "10:40", slot: "Breakfast · post-workout", hl: true, items: "1 scoop whey in 250 ml milk, then 2 chapatis with ghee and 1 katori sabzi.", kcal: 720, p: 43 },
-      { id: "tue3", time: "13:45", slot: "Lunch", items: "1.5 cups rice, 1 katori rajma or chana — whatever is made — 1 tsp ghee, 150 g curd.", kcal: 640, p: 22 },
-      { id: "tue4", time: "16:45", slot: "Snack", items: "Sattu drink — 40 g sattu in 250 ml milk — and 20 g almonds.", kcal: 430, p: 20 },
+      { id: "tue3", time: "13:45", slot: "Lunch", items: "1.5 cups rice, 1 katori rajma or chana - whatever is made - 1 tsp ghee, 150 g curd.", kcal: 640, p: 22 },
+      { id: "tue4", time: "16:45", slot: "Snack", items: "Sattu drink - 40 g sattu in 250 ml milk - and 20 g almonds.", kcal: 430, p: 20 },
       { id: "tue5", time: "20:45", slot: "Dinner", items: "1.5 cups rice, 2 katori dal, 150 g curd. Take the dal twice tonight.", kcal: 660, p: 28 },
     ],
   },
@@ -50,7 +50,7 @@ export const MEALS: NutDay[] = [
     train: "Day 3 · Legs A",
     veg: false,
     meals: [
-      { id: "wed1", time: "08:00", slot: "Pre-workout", hl: true, items: "1 banana, 250 ml full-fat milk, 3 dates. Squat day — do not skip it.", kcal: 320, p: 11 },
+      { id: "wed1", time: "08:00", slot: "Pre-workout", hl: true, items: "1 banana, 250 ml full-fat milk, 3 dates. Squat day - do not skip it.", kcal: 320, p: 11 },
       { id: "wed2", time: "10:40", slot: "Breakfast · post-workout", hl: true, items: "Oats day. 50 g oats cooked in 300 ml milk, whey scoop stirred in once it cools, 1 banana.", kcal: 700, p: 46 },
       { id: "wed3", time: "13:45", slot: "Lunch", items: "2 cups rice, 1 katori dal, 1 tsp ghee over the rice, 150 g curd.", kcal: 685, p: 20 },
       { id: "wed4", time: "16:45", slot: "Snack", items: "200 g curd with 1 tbsp honey, 20 g walnuts.", kcal: 380, p: 11 },
@@ -66,7 +66,7 @@ export const MEALS: NutDay[] = [
       { id: "thu1", time: "08:00", slot: "Pre-workout", hl: true, items: "1 banana, 250 ml full-fat milk, 3 dates.", kcal: 320, p: 11 },
       { id: "thu2", time: "10:40", slot: "Breakfast · post-workout", hl: true, items: "1 scoop whey in 250 ml milk, then 2 chapatis with ghee and 1 katori sabzi.", kcal: 720, p: 43 },
       { id: "thu3", time: "13:45", slot: "Lunch", items: "1.5 cups rice, 1 katori dal, 1 katori sabzi, 1 tsp ghee, 150 g curd.", kcal: 640, p: 19 },
-      { id: "thu4", time: "16:45", slot: "Snack", items: "Sattu drink — 40 g sattu in 250 ml milk — and 20 g almonds.", kcal: 430, p: 20 },
+      { id: "thu4", time: "16:45", slot: "Snack", items: "Sattu drink - 40 g sattu in 250 ml milk - and 20 g almonds.", kcal: 430, p: 20 },
       { id: "thu5", time: "20:45", slot: "Dinner", items: "1.5 cups rice, 2 katori dal, 150 g curd. Dal twice again tonight.", kcal: 660, p: 28 },
     ],
   },
@@ -76,7 +76,7 @@ export const MEALS: NutDay[] = [
     train: "Day 5 · Pull B",
     veg: false,
     meals: [
-      { id: "fri1", time: "08:00", slot: "Pre-workout", hl: true, items: "1 banana, 250 ml full-fat milk, 3 dates. Deadlift day — do not skip it.", kcal: 320, p: 11 },
+      { id: "fri1", time: "08:00", slot: "Pre-workout", hl: true, items: "1 banana, 250 ml full-fat milk, 3 dates. Deadlift day - do not skip it.", kcal: 320, p: 11 },
       { id: "fri2", time: "10:40", slot: "Breakfast · post-workout", hl: true, items: "1 scoop whey in 250 ml milk, then 2 chapatis with ghee and 1 katori sabzi.", kcal: 720, p: 43 },
       { id: "fri3", time: "13:45", slot: "Lunch", items: "1.5 cups rice, your 100 g share of the chicken, 1 katori dal.", kcal: 660, p: 33 },
       { id: "fri4", time: "16:45", slot: "Snack", items: "40 g makhana roasted in ghee, 20 g almonds, 200 ml milk.", kcal: 410, p: 12 },

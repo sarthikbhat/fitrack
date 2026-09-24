@@ -3,7 +3,7 @@ import { addDays } from "@/lib/dates";
 export function workoutDays(sessions: { date: string }[]): Set<string> {
   return new Set(sessions.map((s) => s.date));
 }
-/** Consecutive workout days ending today (or yesterday) — mirrors legacy:1539-1545. */
+/** Consecutive workout days ending today (or yesterday) - mirrors legacy:1539-1545. */
 export function streak(sessions: { date: string }[], today: string): number {
   const days = workoutDays(sessions);
   if (!days.size) return 0;

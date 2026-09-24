@@ -21,6 +21,31 @@ describe("migrate", () => {
   });
 });
 
+describe("shareWorkouts opt-in default + passthrough", () => {
+  test("emptyState defaults shareWorkouts to true (on by default)", () => {
+    expect(emptyState().settings.shareWorkouts).toBe(true);
+  });
+
+  test("an older blob whose settings lack shareWorkouts gets it defaulted to true", () => {
+    const blob = {
+      ...emptyState(),
+      settings: { rest: 120, autoRest: false }, // legacy shape, no shareWorkouts
+    } as unknown;
+    const out = migrate(blob);
+    expect(out.settings.rest).toBe(120);
+    expect(out.settings.autoRest).toBe(false);
+    expect(out.settings.shareWorkouts).toBe(true);
+  });
+
+  test("preserves an already-set shareWorkouts flag", () => {
+    const blob = {
+      ...emptyState(),
+      settings: { rest: 90, autoRest: true, shareWorkouts: true },
+    } as unknown;
+    expect(migrate(blob).settings.shareWorkouts).toBe(true);
+  });
+});
+
 describe("importLegacy", () => {
   test("maps old fitrack-v2 fields into the new shape", () => {
     const legacy = {

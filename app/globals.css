@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
-/* Fitrack design tokens (dark-first — ported verbatim from legacy/index.html:27-37). */
+/* Fitrack design tokens (dark-first - ported verbatim from legacy/index.html:27-37). */
 :root {
   --bg: #0b0d10;
   --bg2: #101318;
-  --panel: #14181e;
-  --panel2: #1a1f27;
+  --panel: #161b22;
+  --panel2: #1e242d;
   --line: #23272e;
   --line2: #2e343d;
   --text: #e8ebf0;
   --muted: #9aa3af;
   --dim: #6b7280;
-  --accent: #10b981;
+  --accent: #3b82f6;
   --accent2: #6366f1;
-  --accentGlow: rgba(16, 185, 129, 0.22);
+  --accentGlow: rgba(59, 130, 246, 0.22);
   --go: #22c55e;
   --gold: #f59e0b;
   --danger: #ef4444;
@@ -23,7 +23,8 @@
   --macro-f: #a855f7;
   --r: 12px;
   --rs: 8px;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px -20px rgba(0, 0, 0, 0.7);
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 2px 4px rgba(0, 0, 0, 0.5),
+    0 16px 36px -12px rgba(0, 0, 0, 0.85);
   --maxw: 820px;
   --nav-h: 66px;
 
@@ -43,16 +44,16 @@
   --text: #111827;
   --muted: #4b5563;
   --dim: #9099a5;
-  --accent: #059669;
+  --accent: #3b82f6;
   --accent2: #4f46e5;
-  --accentGlow: rgba(5, 150, 105, 0.18);
+  --accentGlow: rgba(59, 130, 246, 0.2);
   --go: #16a34a;
   --gold: #b45309;
   --danger: #dc2626;
   --macro-p: #2563eb;
   --macro-c: #d97706;
   --macro-f: #9333ea;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 10px 30px -20px rgba(16, 24, 40, 0.28);
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px -12px rgba(16, 24, 40, 0.18);
 }
 :root[data-theme="light"] header.top {
   background: linear-gradient(180deg, rgba(247, 248, 250, 0.95), rgba(247, 248, 250, 0.65));
@@ -121,6 +122,33 @@ a {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* ---------- themed scrollbar (app-wide default) ----------
+   Replaces the fat/white OS scrollbar in every scroll container (add-food list,
+   modals, page, etc.). Intentionally-hidden horizontal scrollers (.dayscroll,
+   .filters, .filterbar, .heat) keep their own scrollbar-width:none overrides. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line2) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line2);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dim);
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 
 .cond {
@@ -208,6 +236,12 @@ header.top {
   color: var(--muted);
   background: rgba(255, 255, 255, 0.02);
 }
+/* A chip that trails a title (e.g. day name + "Today", program name + "Active")
+   needs breathing room so it doesn't butt against the text - the inline space
+   collapses against the inline-flex chip. */
+.nm .chip {
+  margin-left: 8px;
+}
 /* Clickable chip (tag that filters the catalog). Reuses .chip visuals; adds affordance. */
 .chip-tap {
   cursor: pointer;
@@ -231,7 +265,16 @@ header.top {
   border-radius: var(--rs);
   padding: 10px 14px;
   font-size: 13px;
+  /* icon-leading, consistently aligned labels across the app */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   transition: transform 0.14s, filter 0.2s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+.btn > span[aria-hidden] {
+  display: inline-flex;
+  align-items: center;
 }
 .btn:hover {
   filter: brightness(1.12);
@@ -256,6 +299,19 @@ header.top {
   padding: 7px 11px;
   font-size: 12px;
   border-radius: 8px;
+}
+/* Solid destructive button (confirm dialogs). Scoped with :not(.ghost) so the
+   existing ghost-style .btn.danger trash buttons (nutrition meal actions) keep
+   their transparent look. */
+.btn.danger:not(.ghost) {
+  background: var(--danger);
+  color: #ffffff;
+  border: none;
+  box-shadow: var(--shadow);
+}
+.btn.danger:not(.ghost):hover {
+  filter: brightness(1.08);
+  border-color: transparent;
 }
 .cell {
   background: var(--panel2);
@@ -514,12 +570,26 @@ header.top {
   font-size: 17px;
   color: var(--muted);
 }
+/* Makes it obvious the stepper below is the "log my weight" input. */
+.bwlog-lbl {
+  margin-top: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.bwlog-hint {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--dim);
+}
 .bwedit {
   display: flex;
   gap: 8px;
   align-items: center;
   justify-content: center;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 .bwedit .cell {
   max-width: 110px;
@@ -546,10 +616,49 @@ header.top {
   display: block;
   margin-top: 6px;
 }
+/* Bodyweight trend mini-section (chart when >=2 logged points, hint otherwise) */
+.wtrend {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  text-align: left;
+}
+.wtrend-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.wtrend-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+.wtrend-delta {
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-geist-mono);
+}
+.wtrend-hint {
+  color: var(--dim);
+  font-size: 12.5px;
+  padding: 14px 4px 4px;
+  text-align: center;
+}
+/* Secondary progress cards (heatmap, weekly volume) - reflow so a lone card
+   fills the width instead of leaving a blank half-column. */
+.dash-secondary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px 20px;
+  align-items: start;
+}
 .goalrow {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   margin-top: 14px;
   padding-top: 14px;
   border-top: 1px solid var(--line);
@@ -662,9 +771,13 @@ header.top {
 }
 
 /* ---------- heatmap ---------- */
+/* 13 week-columns laid across the full card width; each column stacks 7 square
+   day-cells, so the graph fills the width and is ~7 rows tall (GitHub-style). */
 .heat {
-  display: flex;
-  gap: 3px;
+  display: grid;
+  grid-template-columns: repeat(13, minmax(9px, 1fr));
+  gap: 4px;
+  width: 100%;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -672,16 +785,15 @@ header.top {
   display: none;
 }
 .hcol {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  gap: 4px;
 }
 .hc {
-  width: 13px;
-  height: 13px;
+  width: 100%;
+  aspect-ratio: 1;
   border-radius: 3px;
   background: var(--line2);
-  flex-shrink: 0;
 }
 .hc.l1 {
   background: color-mix(in srgb, var(--accent) 30%, transparent);
@@ -704,13 +816,15 @@ header.top {
   align-items: center;
   gap: 4px;
   justify-content: flex-end;
-  margin-top: 12px;
+  margin-top: 10px;
   font-size: 10px;
   color: var(--dim);
 }
 .heatkey .hc {
+  flex: 0 0 auto;
   width: 11px;
   height: 11px;
+  aspect-ratio: auto;
 }
 
 /* ---------- volume chart ---------- */
@@ -802,16 +916,16 @@ nav.tabs {
 }
 
 /* ---------- progress ring (legacy:121-125,312-317) ---------- */
-.ring {
+.pring {
   position: relative;
   flex-shrink: 0;
 }
-.ring svg {
+.pring svg {
   transform: rotate(-90deg);
   position: relative;
   z-index: 1;
 }
-.ring .lbl {
+.pring .lbl {
   position: absolute;
   inset: 0;
   display: flex;
@@ -820,12 +934,12 @@ nav.tabs {
   justify-content: center;
   z-index: 1;
 }
-.ring .lbl b {
+.pring .lbl b {
   font-size: 19px;
   font-weight: 700;
   line-height: 1;
 }
-.ring .lbl span {
+.pring .lbl span {
   font-size: 9px;
   color: var(--dim);
   letter-spacing: 0.1em;
@@ -1276,6 +1390,49 @@ nav.tabs {
 }
 .modal .content {
   padding: 16px 18px 24px;
+}
+
+/* Centered confirm / prompt dialog. Reuses .overlay + .modal; overrides the
+   bottom-sheet alignment so it sits centered on all sizes. */
+.confirm-overlay {
+  align-items: center;
+  padding: 20px;
+}
+.modal.confirm {
+  max-width: 400px;
+  border-radius: 16px;
+  padding: 20px 20px 18px;
+  animation: pop 0.22s cubic-bezier(0.22, 0.9, 0.3, 1) both;
+}
+.confirm-title {
+  margin: 0;
+  font-size: 19px;
+}
+.confirm-msg {
+  margin: 8px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.confirm-label {
+  display: block;
+  margin: 14px 0 6px;
+}
+.confirm-input {
+  width: 100%;
+  margin-top: 14px;
+}
+.confirm-label + .confirm-input {
+  margin-top: 0;
+}
+.confirmbtns {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 20px;
+}
+.confirmbtns .btn {
+  min-width: 92px;
 }
 .modal .metarow {
   display: flex;
@@ -1758,9 +1915,16 @@ nav.tabs {
   margin: 2px 0 10px;
   color: var(--muted);
 }
+/* Quiet full-width "add" row: hairline border, muted label, accent icon. */
 .addex {
-  border-style: dashed !important;
-  color: var(--accent) !important;
+  color: var(--muted);
+}
+.addex:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.addex > span[aria-hidden] {
+  color: var(--accent);
 }
 .pr {
   font-family: var(--font-geist-mono);
@@ -2609,42 +2773,47 @@ nav.tabs {
 .mchip.c { color: var(--macro-c); background: color-mix(in srgb, var(--macro-c) 15%, transparent); }
 .mchip.f { color: var(--macro-f); background: color-mix(in srgb, var(--macro-f) 15%, transparent); }
 
-.addfood {
-  width: 100%;
-  margin: 6px 0 4px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
 /* ---- add-food sheet ---- */
+/* Small, quiet "add custom food" entry near the top for discoverability. */
 .custom-cta {
-  width: 100%;
-  margin: 10px 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
+  margin: 10px 0 4px;
+  padding: 7px 11px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.custom-cta:hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+.custom-cta > span[aria-hidden] {
+  color: var(--accent);
 }
 .foodlist {
   display: flex;
   flex-direction: column;
   max-height: 52vh;
   overflow-y: auto;
+  /* Breathing room: keep rows off the themed scrollbar, and a little top/bottom air. */
+  padding: 4px 6px 6px 2px;
+  margin-top: 2px;
 }
 .foodrow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 11px 4px;
+  gap: 16px;
+  padding: 14px 6px;
   border: none;
   background: transparent;
   border-top: 1px solid var(--line);
   color: var(--text);
   cursor: pointer;
   text-align: left;
+  border-radius: 8px;
+}
+/* First row reads as the list's start, not a bordered cell. */
+.foodrow:first-child {
+  border-top: none;
 }
 .foodrow:hover {
   background: var(--panel2);
@@ -2658,6 +2827,7 @@ nav.tabs {
 .foodrow-name {
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.35;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2804,27 +2974,51 @@ nav.tabs {
   margin-bottom: 10px;
 }
 
-/* OpenFoodFacts section header + notes in the food list */
-.off-head {
+/* Subtle inline "searching more foods" row at the bottom of the unified list. */
+.foodrow-loading {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-  margin: 14px 2px 6px;
-  border-top: 1px solid var(--line2);
-  padding-top: 10px;
-}
-.off-note {
-  font-size: 11px;
+  padding: 12px 4px;
+  border-top: 1px solid var(--line);
   color: var(--dim);
-  font-style: italic;
+  font-size: 12.5px;
 }
-.off-empty {
-  padding: 4px 2px 2px;
+.spinner {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid var(--line2);
+  border-top-color: var(--accent);
+  animation: spin 0.7s linear infinite;
+  flex: none;
 }
-.foodrow-tag.off {
-  background: var(--line2);
-  color: var(--dim);
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Prominent empty-state: add the query as a custom food. */
+.nofood {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  margin: 14px 0 4px;
+  padding: 24px 16px;
+  border: 1px solid var(--line2);
+  border-radius: var(--rs);
+  background: var(--panel2);
+}
+.nofood-msg {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.nofood-cta {
+  gap: 7px;
 }
 
 /* per-meal action row (add food / remove) */
@@ -2882,7 +3076,7 @@ nav.tabs {
 }
 
 /* ============================================================================
-   DESKTOP — persistent sidebar + wide multi-column layouts (>= 900px).
+   DESKTOP - persistent sidebar + wide multi-column layouts (>= 900px).
    Mobile (< 900px) keeps the top header + bottom nav single column untouched.
    Both layouts live in the DOM; only CSS `display` toggles between them, so it
    is fully SSR / hydration-safe (no JS resize logic).
@@ -2966,6 +3160,9 @@ nav.tabs {
 }
 .snav-foot {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 @media (min-width: 900px) {
@@ -2987,7 +3184,7 @@ nav.tabs {
   }
 
   /* main column: use the width, comfortable gutters, no bottom-nav reserve.
-     width:100% is required — inside the grid cell, `margin:0 auto` alone would
+     width:100% is required - inside the grid cell, `margin:0 auto` alone would
      disable stretch and shrink .wrap to its content width. */
   .wrap {
     width: 100%;
@@ -3056,14 +3253,31 @@ nav.tabs {
   .dash {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4px 20px;
-    align-items: start;
+    gap: 16px 20px;
+    /* stretch so paired cards in a row share the tallest height */
+    align-items: stretch;
   }
-  .dash .dashcard.wide {
+  .dash .dashcard.wide,
+  .dash .dash-secondary {
     grid-column: 1 / -1;
+    /* full-width cards own their row - height fits content, no stretch */
+    align-self: start;
+  }
+  /* let each cell's card fill the stretched grid row */
+  .dash .dashcard {
+    display: flex;
+    flex-direction: column;
+  }
+  .dash .home-card {
+    flex: 1;
   }
   .dash .dashcard .section-h {
     margin-top: 18px;
+  }
+  /* Home puts .section-h INSIDE the panel, so the 18px above must not apply -
+     the header sits flush at the top of the card (spacing comes from home-card gap). */
+  .dash .dashcard .home-card .section-h {
+    margin-top: 0;
   }
 
   /* --- Library: more cards per row, filter bar lays out horizontally --- */
@@ -3087,7 +3301,7 @@ nav.tabs {
   }
 }
 
-/* Library catalog grid — always fill available width with as many cards as fit.
+/* Library catalog grid - always fill available width with as many cards as fit.
    Higher specificity (main .libgrid) so it overrides the earlier fixed-column
    rules at every breakpoint. One column only when the container is truly narrow. */
 main .libgrid {
@@ -3097,4 +3311,1042 @@ main .libgrid {
 }
 .libcard {
   min-width: 0;
+}
+
+/* ============================================================================
+   Account presence - avatar, sidebar/header account block + menu, profile page.
+   All token-driven so both themes track automatically.
+   ============================================================================ */
+
+/* --- avatar --- */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel2));
+  border: 1px solid var(--line2);
+}
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.avatar-fallback {
+  font-family: var(--font-geist-sans);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--accent);
+  line-height: 1;
+}
+
+/* --- account control (shared trigger + popover menu) --- */
+.acct-root {
+  position: relative;
+}
+.acct-root-sidebar {
+  width: 100%;
+}
+
+/* sidebar: full-width block with avatar + name/username */
+.acct-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.16s, border-color 0.16s;
+}
+.acct-block:hover {
+  background: var(--panel2);
+  border-color: var(--line2);
+}
+.acct-block-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+.acct-name {
+  font-family: var(--font-geist-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.acct-username {
+  font-size: 11.5px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* signed-out CTA (sidebar) */
+.acct-signin {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 2px 2px;
+}
+.acct-signin .btn {
+  width: 100%;
+}
+.acct-signin-sub {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* header: compact avatar button + mini sign-in */
+.acct-avatar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 999px;
+}
+.acct-avatar-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.acct-signin-mini {
+  font-family: var(--font-geist-sans);
+  font-weight: 600;
+  font-size: 12.5px;
+  color: #04120d;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+:root[data-theme="light"] .acct-signin-mini {
+  color: #ffffff;
+}
+
+.top-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* popover menu */
+.acct-menu {
+  position: absolute;
+  z-index: 60;
+  min-width: 180px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--line2);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* sidebar menu opens upward, anchored to the block */
+.acct-menu-sidebar {
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 8px);
+}
+/* header menu drops down from the avatar, right-aligned */
+.acct-menu-header {
+  right: 0;
+  top: calc(100% + 8px);
+}
+.acct-menu-item {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-geist-sans);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+}
+.acct-menu-item:hover {
+  background: var(--panel2);
+}
+.acct-menu-item.danger {
+  color: var(--danger);
+}
+
+/* --- public profile page --- */
+.profile-page {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px;
+  margin-top: 8px;
+}
+.profile-id {
+  min-width: 0;
+  flex: 1;
+}
+.profile-name {
+  font-family: var(--font-geist-sans);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+.profile-handle {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.profile-joined {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--dim);
+}
+.profile-actions {
+  flex-shrink: 0;
+}
+.profile-bio {
+  margin: 16px 2px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+.profile-empty {
+  margin-top: 22px;
+}
+
+/* --- follow: profile hero social block (counts + action) --- */
+.profile-social {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+.follow-counts {
+  display: flex;
+  gap: 16px;
+}
+.follow-count {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.follow-count b {
+  color: var(--text);
+  font-weight: 700;
+  font-family: var(--font-geist-mono);
+}
+/* Follow / Following toggle. "Follow" reuses .btn.primary (accent). "Following"
+   is a quiet outlined state that turns danger-tinted on hover (reads "Unfollow"). */
+.follow-btn {
+  min-width: 96px;
+}
+.follow-btn.following {
+  background: var(--panel2);
+  color: var(--muted);
+  border-color: var(--line2);
+}
+.follow-btn.following:hover {
+  filter: none;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* --- find people (search + follow) --- */
+.people-page {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.people-head {
+  margin: 8px 2px 16px;
+}
+.people-head .page-title {
+  font-family: var(--font-geist-sans);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+.people-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.people-search {
+  margin-bottom: 8px;
+}
+.people-note {
+  font-size: 12px;
+  color: var(--dim);
+  margin: 4px 2px 12px;
+}
+.people-results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.people-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+.people-ident {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+  color: inherit;
+  text-decoration: none;
+}
+.people-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.people-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.people-handle {
+  font-size: 12px;
+  color: var(--muted);
+}
+.people-row .follow-btn {
+  flex-shrink: 0;
+}
+
+/* --- profile editor (Settings → Account) --- */
+.profedit-uname {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.profedit-at {
+  position: absolute;
+  left: 12px;
+  color: var(--muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+.profedit-uname .search {
+  padding-left: 26px;
+  width: 100%;
+}
+.profedit-bio {
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+@media (min-width: 900px) {
+  /* the compact header avatar is only needed on mobile; desktop uses the rail */
+  .top-actions .acct-root {
+    display: none;
+  }
+}
+
+/* ---------- mobile: right-size buttons & steppers ----------
+   Desktop sizes stay as defined above; only shrink on small screens.
+   Touch targets stay >= 36px. */
+@media (max-width: 640px) {
+  .btn {
+    padding: 8px 12px;
+    font-size: 12.5px;
+  }
+  .btn.sm {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  /* +/- steppers on the Progress bodyweight/goal/height rows: compact squares */
+  .bwedit .btn.sm,
+  .goalrow .btn.sm {
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    font-size: 18px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .bwbox {
+    padding: 16px;
+  }
+  .bwbox .big {
+    font-size: 34px;
+  }
+  .bwedit .cell {
+    max-width: 100px;
+    font-size: 18px;
+    height: 38px;
+  }
+  .goalrow .cell {
+    max-width: 76px;
+    font-size: 15px;
+    height: 38px;
+  }
+}
+
+/* Add-food portion picker: stepper (− value +) + unit dropdown */
+.portion {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  margin-bottom: 12px;
+}
+.stepper {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 6px;
+  flex: none;
+}
+.stepbtn {
+  width: 42px;
+  min-width: 42px;
+  border: 1px solid var(--line2);
+  background: var(--panel2);
+  color: var(--text);
+  border-radius: 8px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.stepbtn:hover {
+  border-color: var(--accent);
+}
+.stepper .stepval {
+  width: 66px;
+  min-width: 66px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.unitsel {
+  flex: 1;
+  min-width: 0;
+}
+
+/* =============================================================================
+   Share a plan via link
+   - .sharelink / .sharelink-url : the copy-link row inside the Share sheet
+   - .share-*                    : the public /p/<code> page (standalone layout)
+   Token-driven; reuses .panel / .chip / .btn / .miniex / .mealgroup.
+   ========================================================================== */
+.sharelink {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+.sharelink-url {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-geist-mono);
+  font-size: 13px;
+  color: var(--text);
+  background: var(--panel2);
+  border: 1px solid var(--line2);
+  border-radius: var(--rs);
+  padding: 10px 12px;
+}
+.sharelink-url:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+/* ---- public shared-plan page ---- */
+.share-page {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+}
+.share-top {
+  padding: 16px 0;
+  padding-top: max(16px, env(safe-area-inset-top));
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--panel), var(--bg2));
+}
+/* Constrain the standalone header to the same centered column + gutters as the
+   body (.share-main), so brand/chip align with the content instead of the edge. */
+.share-top-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.share-top .brand {
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  font-size: 18px;
+}
+.share-main {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 18px 16px 48px;
+}
+.share-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px;
+}
+.share-hero-id {
+  min-width: 0;
+  flex: 1;
+}
+.share-title {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  margin: 0;
+}
+.share-by {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.share-handle {
+  color: var(--dim);
+}
+.share-day .dh {
+  cursor: default;
+}
+.share-ex .nm {
+  font-weight: 600;
+}
+.share-ex .sr {
+  color: var(--dim);
+  font-size: 12px;
+  margin-top: 2px;
+}
+.share-clone-btn {
+  white-space: nowrap;
+}
+.share-clone-done {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.share-clone-msg {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  color: var(--go);
+  font-size: 13px;
+}
+
+/* ============================================================================
+   Home dashboard - landing overview. Reuses .dash/.dashcard grid, .panel, .btn,
+   .rollup/.macrobar, .stat/.macro, .histrow. Adds only home-specific helpers.
+   ============================================================================ */
+.home-hi {
+  margin: 4px 2px 6px;
+}
+.home-greet {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+.home-hi .eyebrow {
+  color: var(--dim);
+  letter-spacing: 0.04em;
+}
+/* A dashboard panel that lays its content in a column with a CTA pinned below. */
+.home-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 18px;
+}
+/* The in-card header sits flush at the top; vertical rhythm comes from the
+   home-card gap, not section-h's own default margins. */
+.home-card .section-h {
+  margin: 0;
+}
+/* Keep every dashboard card a SINGLE panel: the "This week" stat tiles render as
+   plain figures, not bordered/filled boxes inside the already-bordered card. */
+.home-card .macro {
+  background: transparent;
+  border: none;
+  padding: 4px 2px;
+}
+.home-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.home-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.home-focus {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 3px;
+}
+.home-meta {
+  color: var(--dim);
+  font-size: 12px;
+  margin-top: 6px;
+  font-family: var(--font-geist-mono);
+}
+.home-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.home-cta {
+  width: 100%;
+  margin-top: auto;
+}
+.home-bw {
+  font-family: var(--font-geist-mono);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+}
+.home-bw small {
+  font-size: 16px;
+  color: var(--muted);
+}
+.home-stat {
+  text-align: right;
+}
+.home-stat b {
+  display: block;
+  font-family: var(--font-geist-mono);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+.home-stat span {
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 4px;
+  display: block;
+}
+.home-quick {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.home-quick-btn {
+  width: 100%;
+}
+@media (min-width: 720px) {
+  .home-quick {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* =============================================================================
+   Social activity feed (/feed) + profile recent-activity list
+   Token-driven cards, like/comment controls, and comment list/input.
+   ============================================================================= */
+.feed-page {
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.feed-head {
+  margin: 8px 2px 16px;
+}
+.feed-head .page-title {
+  font-family: var(--font-geist-sans);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+.feed-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* signed-out sign-in card */
+.feed-signin {
+  padding: 28px 22px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+.feed-signin-title {
+  font-family: var(--font-geist-sans);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text);
+}
+.feed-signin-sub {
+  font-size: 13px;
+  color: var(--muted);
+  max-width: 340px;
+  line-height: 1.5;
+}
+.feed-signin .btn {
+  margin-top: 6px;
+  min-width: 200px;
+}
+.feed-signin-link {
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: none;
+  margin-top: 2px;
+}
+.feed-signin-link:hover {
+  text-decoration: underline;
+}
+
+/* empty + load-more */
+.feed-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+}
+.feed-more {
+  width: 100%;
+  margin-top: 12px;
+}
+
+/* feed list + cards */
+.feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+}
+.feed-card {
+  padding: 16px;
+}
+.feed-card-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.feed-ident {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+  color: inherit;
+  text-decoration: none;
+}
+.feed-ident-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.feed-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.feed-handle {
+  font-size: 12px;
+  color: var(--muted);
+}
+.feed-time {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+/* per-post delete (own posts only): ghost icon button, danger on hover */
+.feed-del {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--rs);
+  transition: color 0.15s, background 0.15s;
+}
+.feed-del:hover {
+  color: var(--danger);
+  background: var(--panel2);
+}
+.feed-activity {
+  margin: 12px 2px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* like / comment controls */
+.feed-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+.feed-act {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--line2);
+  border-radius: var(--rs);
+  background: var(--panel2);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+.feed-act:hover {
+  color: var(--text);
+  border-color: var(--muted);
+}
+.feed-act.liked {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.feed-act.liked svg {
+  fill: var(--danger);
+}
+.feed-act.on {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* comments */
+.feed-comments {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.feed-comment-empty {
+  font-size: 13px;
+  color: var(--dim);
+}
+.feed-comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.feed-comment-body {
+  min-width: 0;
+  flex: 1;
+}
+.feed-comment-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.feed-comment-name {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+}
+.feed-comment-time {
+  font-size: 11px;
+  color: var(--dim);
+}
+.feed-comment-text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--text);
+  margin-top: 2px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.feed-comment-del {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  padding: 2px;
+  border-radius: var(--rs);
+}
+.feed-comment-del:hover {
+  color: var(--danger);
+}
+.feed-comment-add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.feed-comment-add .search {
+  flex: 1;
+  min-width: 0;
+}
+.feed-comment-add .btn {
+  flex-shrink: 0;
+}
+
+/* profile page: recent activity */
+.profile-activity {
+  margin-top: 22px;
+}
+.profile-section-title {
+  font-family: var(--font-geist-sans);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0 2px 12px;
+}
+.profile-activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.profile-activity-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+}
+.profile-activity-text {
+  font-size: 14px;
+  color: var(--text);
+  min-width: 0;
+}
+.profile-activity-date {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--dim);
+  white-space: nowrap;
+}
+
+/* ---- Legal pages (Privacy / Terms) ---- */
+.legal {
+  padding: 28px 30px 34px;
+  max-width: 760px;
+  margin: 0 auto;
+  line-height: 1.65;
+  color: var(--text);
+}
+.legal-title {
+  font-size: 30px;
+  margin: 0 0 4px;
+}
+.legal-updated {
+  color: var(--dim);
+  font-size: 13px;
+  margin: 0 0 20px;
+}
+.legal h2 {
+  font-size: 18px;
+  margin: 26px 0 8px;
+  color: var(--text);
+}
+.legal p {
+  margin: 0 0 12px;
+  color: var(--muted);
+}
+.legal ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+  color: var(--muted);
+}
+.legal li {
+  margin: 4px 0;
+}
+.legal a {
+  color: var(--accent);
+  text-decoration: none;
+}
+.legal a:hover {
+  text-decoration: underline;
+}
+.legal strong {
+  color: var(--text);
+}
+.legal-foot {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+  margin: 18px 0 8px;
+  font-size: 13px;
+  color: var(--dim);
+}
+.legal-foot a {
+  color: var(--muted);
+  text-decoration: none;
+}
+.legal-foot a:hover {
+  color: var(--accent);
+}
+.snav-legal {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 12px 2px;
+  font-size: 12px;
+  color: var(--dim);
+}
+.snav-legal a {
+  color: var(--dim);
+  text-decoration: none;
+}
+.snav-legal a:hover {
+  color: var(--accent);
 }

@@ -3,7 +3,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <meta name="theme-color" content="#080A0F"/>
-<meta name="description" content="Fitrack — local-first futuristic fitness tracker"/>
+<meta name="description" content="Fitrack - local-first futuristic fitness tracker"/>
 <title>Fitrack</title>
 <link rel="manifest" href="manifest.json"/>
 <link rel="icon" href="icon.svg"/>
@@ -583,7 +583,7 @@ const ATHLETE = {
   ratePerWeek: 0.25
 };
 
-/* six clearly separated hues — completed sets stay green, so no green here */
+/* six clearly separated hues - completed sets stay green, so no green here */
 const MG = {
   Chest: '#00A8FF',
   Back: '#7C5CFF',
@@ -970,8 +970,8 @@ const LIBRARY = (() => {
   });
   return out;
 })();
-const WARMUP = ['5 min bike or treadmill — easy, just get warm', 'Arm circles + band pull-aparts — 20 each', 'Bodyweight squats — 15', 'Hip and ankle rocks — 30 s per side', 'One empty-bar or half-weight set of your first exercise'];
-const COOLDOWN = ['Chest doorway stretch — 30 s per side', 'Lat hang or overhead reach — 30 s', 'Couch stretch (quads + hip flexor) — 45 s per side', 'Seated hamstring fold — 45 s', 'Slow nasal breathing — 10 breaths'];
+const WARMUP = ['5 min bike or treadmill - easy, just get warm', 'Arm circles + band pull-aparts - 20 each', 'Bodyweight squats - 15', 'Hip and ankle rocks - 30 s per side', 'One empty-bar or half-weight set of your first exercise'];
+const COOLDOWN = ['Chest doorway stretch - 30 s per side', 'Lat hang or overhead reach - 30 s', 'Couch stretch (quads + hip flexor) - 45 s per side', 'Seated hamstring fold - 45 s', 'Slow nasal breathing - 10 breaths'];
 
 /* ============================================================ nutrition === */
 
@@ -1582,7 +1582,7 @@ function initials(name) {
 function chip(ex) { const c = mc(ex.muscle); return `<span class="chip mg" style="background:${withA(c, .16)};color:${c}">${ex.muscle}</span>`; }
 /* Resize + re-encode exercise images through a free image CDN (weserv.nl):
    the source JPGs are ~850px/~90KB but render into 44–90px thumbs, so we pull
-   width-capped WebP instead — ~95% smaller, modern format. Falls back to the
+   width-capped WebP instead - ~95% smaller, modern format. Falls back to the
    coloured monogram if the CDN or image is unavailable. */
 const cdnImg = (src, w, q) => 'https://images.weserv.nl/?url=' + encodeURIComponent(src) + '&w=' + w + '&output=webp&q=' + (q || 82) + '&we';
 /* static single-frame thumbnail (used in cards, program, warm-up/cool-down).
@@ -1712,7 +1712,7 @@ function renderTrain() {
   <section class="panel" style="padding:6px 16px">${cueList(WARMUP)}</section>
 
   <div class="section-h"><h2>Session</h2><span class="sub" id="sessCount">${done}/${total} sets</span></div>
-  <div class="exlist">${exs.length ? exs.map(e => exCard(date, e, plan)).join('') : '<div class="empty">No exercises yet — add some below to start logging.</div>'}</div>
+  <div class="exlist">${exs.length ? exs.map(e => exCard(date, e, plan)).join('') : '<div class="empty">No exercises yet - add some below to start logging.</div>'}</div>
   <button class="btn ghost addex" data-act="openPicker" data-day="${plan.id}" style="width:100%;margin-top:10px">+ Add exercise</button>
 
   <div class="section-h"><h2>Notes</h2><span class="sub">today</span></div>
@@ -1737,7 +1737,7 @@ function miniEx(ex, day) {
   </div>`;
 }
 function cueRow(line) {
-  const nm = line.split(/[—–-]|\(/)[0].trim();
+  const nm = line.split(/[-–-]|\(/)[0].trim();
   const e = getEx(nm);
   const media = e ? `<div class="thumb sm">${framesHTML(e, nm)}</div>` : '<span class="cuedot"></span>';
   return `<div class="cue">${media}<div class="ct">${esc(line)}</div></div>`;
@@ -1964,7 +1964,7 @@ function renderProgress() {
         <div style="font-size:12px;color:var(--dim)">${h.sets} sets${h.vol ? ' · ' + Math.round(h.vol).toLocaleString() + ' vol' : ''}</div>
         ${S.notes[h.date] ? `<div class="hnote">${esc(S.notes[h.date])}</div>` : ''}</div>
       <button class="delbtn" data-act="delSession" data-i="${i}" aria-label="delete session">${IC.trash}</button>
-    </div>`).join('') : '<div class="empty">Finish a session on the Train tab — your streak, heatmap, weekly volume and per-lift PRs build up here as you log.</div>'}
+    </div>`).join('') : '<div class="empty">Finish a session on the Train tab - your streak, heatmap, weekly volume and per-lift PRs build up here as you log.</div>'}
   </section>`;
 }
 
@@ -2346,7 +2346,7 @@ function importData(file) {
 /* ---- switch-workout sheet ---- */
 function switchSheetHTML() {
   const t = todayISO(), active = !!S.custom[t], pl = plannedForToday();
-  const rows = [{ w: 'free', l: 'Freestyle', s: 'Empty — add exercises as you go' }]
+  const rows = [{ w: 'free', l: 'Freestyle', s: 'Empty - add exercises as you go' }]
     .concat(PLAN.map(d => ({ w: d.id, l: d.name, s: d.label + ' · ' + d.focus })));
   const list = rows.map(r => `<button class="pickrow" data-act="pickWorkout" data-w="${r.w}">
       <div class="pmeta"><div class="nm">${esc(r.l)}</div><div style="margin-top:3px;font-size:12px;color:var(--dim)">${esc(r.s)}</div></div>
@@ -2356,7 +2356,7 @@ function switchSheetHTML() {
       <div class="pickhead"><div style="display:flex;align-items:center;justify-content:space-between">
         <h3 class="cond" style="font-size:19px">Today's workout</h3>
         <button class="close" style="position:static" data-act="closeSheet" aria-label="close">${IC.close}</button></div>
-        <p class="shint" style="margin:8px 0 0">Feel like something else? Pick a template or start blank — it records the same way.</p></div>
+        <p class="shint" style="margin:8px 0 0">Feel like something else? Pick a template or start blank - it records the same way.</p></div>
       <div class="sheetbody" style="padding-top:6px">
         ${active ? `<button class="pickrow" data-act="pickWorkout" data-w="plan"><div class="pmeta"><div class="nm" style="color:var(--accent)">↩ Back to planned</div><div style="margin-top:3px;font-size:12px;color:var(--dim)">${esc(pl ? pl.name : 'Rest day')}</div></div></button>` : ''}
         ${list}
@@ -2405,7 +2405,7 @@ function renderSheet() {
         <div class="srow"><span>Auto-start rest after a set</span>
           <button class="toggle${S.autoRest ? ' on' : ''}" data-act="restToggle" aria-pressed="${S.autoRest}"><i></i></button></div>
         <div class="srule"></div>
-        <div class="srow"><span>Age</span><div class="restset"><button class="btn sm" data-act="ageAdj" data-d="-1" aria-label="less">–</button><span class="cond" style="min-width:40px;text-align:center">${S.age || '—'}</span><button class="btn sm" data-act="ageAdj" data-d="1" aria-label="more">+</button></div></div>
+        <div class="srow"><span>Age</span><div class="restset"><button class="btn sm" data-act="ageAdj" data-d="-1" aria-label="less">–</button><span class="cond" style="min-width:40px;text-align:center">${S.age || '-'}</span><button class="btn sm" data-act="ageAdj" data-d="1" aria-label="more">+</button></div></div>
         <div class="srow"><span>Sex</span>${seg('setSex', S.sex, [{ v: 'male', l: 'Male' }, { v: 'female', l: 'Female' }])}</div>
         <div class="srow" style="flex-wrap:wrap"><span>Activity</span>${seg('setAct', String(S.activity), [{ v: '1', l: 'Low' }, { v: '2', l: 'Light' }, { v: '3', l: 'Mod' }, { v: '4', l: 'High' }, { v: '5', l: 'Elite' }])}</div>
         <div class="shint" style="margin:2px 0 0">Age &amp; activity power the nutrition target calculator.</div>

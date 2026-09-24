@@ -10,8 +10,10 @@ import type {
   LogEntry,
   LoggedMeal,
   MealItem,
+  Plan,
   Profile,
   Program,
+  SessionSummary,
   State,
   Units,
 } from "@/lib/types";
@@ -24,7 +26,9 @@ import { makeId, now } from "@/lib/ids";
 import { calcTargets } from "@/lib/targets";
 import { CURRENT_VERSION, defaultProfile, emptyState, migrate } from "@/lib/migrate";
 import { parseImport } from "@/lib/validate";
+import { cloneProgramForImport, clonePlanForImport } from "@/lib/share";
 import { idbStorage } from "@/lib/db";
+import { getSyncMeta, setLastSyncedAt, type SyncMeta } from "@/lib/sync/changes";
 import {
   logFor,
   sessionFromDay,
@@ -38,8 +42,9 @@ import {
   activeDays,
 } from "@/lib/day";
 import { todayISO } from "@/lib/dates";
+import { pruneEmptyMeals } from "@/lib/meals";
 
-// Seed foods are a static import, merged in at read time by allFoods() — never
+// Seed foods are a static import, merged in at read time by allFoods() - never
 // copied into the persisted store, so the saved blob stays small.
 const SEED_FOODS = seedFoodsRaw as unknown as Food[];
 
@@ -113,9 +118,13 @@ export type OnboardingData = {
 export type Store = State & {
   hydrated: boolean;
   setHydrated: () => void;
+  // Auth: flip the id local data is tagged with. Never persisted as an action
+  // (excluded from partialize); userId itself stays part of the persisted State.
+  setUserId: (id: string) => void;
   reset: () => void;
   setBw: (kg: number) => void;
   setGoal: (kg: number) => void;
+  setStartWeight: (kg: number) => void;
   setHeight: (cm: number) => void;
   deleteSession: (id: string) => void;
   setLoggedSet: (date: string, exName: string, i: number, field: "w" | "r", value: string, plannedSets: number) => void;
@@ -123,7 +132,7 @@ export type Store = State & {
   addSet: (date: string, exName: string, plannedSets: number) => void;
   delSet: (date: string, exName: string, i: number, plannedSets: number) => void;
   setNote: (date: string, text: string) => void;
-  finishSession: (date: string, dayName: string, exercises: PlanExercise[]) => void;
+  finishSession: (date: string, dayName: string, exercises: PlanExercise[]) => SessionSummary;
   discardDay: (date: string, exNames: string[]) => void;
   // Day-edit slices (mutate persisted added/removed/order; legacy picker handlers 2140-2173).
   addExerciseToDay: (dayId: string, item: { name: string; muscle: string }) => void;
@@ -137,6 +146,11 @@ export type Store = State & {
   renameProgram: (id: string, name: string) => void;
   deleteProgram: (id: string) => void;
   setActiveProgram: (id: string) => void;
+  // ---- import shared plans (clone a plan opened from a /p/<code> link) ----
+  // Both work fully signed-out (pure local writes); the sync engine picks up the
+  // change automatically when signed in. Excluded from partialize (they're actions).
+  importProgram: (program: Program) => string; // clone under a fresh id, set active
+  importPlan: (plan: Plan) => void; // replace the recurring nutrition plan
   // Switch-workout sheet (per-date custom day; legacy pickWorkout 2181-2187).
   setCustomDay: (date: string, day: PlanDay) => void;
   startFreestyle: (date: string) => void;
@@ -155,6 +169,9 @@ export type Store = State & {
   renameLoggedMeal: (date: string, id: string, name: string) => void;
   removeLoggedMeal: (date: string, id: string) => void;
   removeLoggedItem: (date: string, mealId: string, entryId: string) => void;
+  // Safety net: drop any zero-item logged meals for a day (called when the add sheet closes)
+  // so a deferred meal that never got a food never lingers as an empty card / stray delete icon.
+  pruneEmptyMeals: (date: string) => void;
   dayTotals: (date: string) => Macros;
   // Food library.
   addCustomFood: (food: Omit<Food, "id" | "updatedAt" | "source">) => string;
@@ -168,6 +185,7 @@ export type Store = State & {
   setTheme: (theme: "dark" | "light") => void;
   setRest: (sec: number) => void;
   setAutoRest: (on: boolean) => void;
+  setShareWorkouts: (on: boolean) => void;
   setSex: (sex: "male" | "female") => void;
   setAge: (age: number) => void;
   setActivity: (activity: 1 | 2 | 3 | 4 | 5) => void;
@@ -180,6 +198,10 @@ export type Store = State & {
   resetAll: () => void;
   // Active target: goals normalised to {kcal,p,c,f} (legacy curTargets, 1782).
   curTargets: () => { kcal: number; p: number; c: number; f: number };
+  // ---- sync (foundation only; network push/pull lands in the next plan) ----
+  // Expose the persist-diff SyncMeta + last-synced stamp to the future engine.
+  getSyncMeta: () => SyncMeta;
+  setLastSyncedAt: (t: number) => void;
 };
 
 export const useStore = create<Store>()(
@@ -188,6 +210,7 @@ export const useStore = create<Store>()(
       ...emptyState(),
       hydrated: false,
       setHydrated: () => set({ hydrated: true }),
+      setUserId: (id) => set({ userId: id }),
       reset: () => set({ ...emptyState() }),
       setBw: (kg) =>
         set((s) => {
@@ -198,6 +221,8 @@ export const useStore = create<Store>()(
           return { body: { ...s.body, bw: kg, history } };
         }),
       setGoal: (kg) => set((s) => ({ body: { ...s.body, goalWeight: Math.min(300, Math.max(30, kg)) } })),
+      setStartWeight: (kg) =>
+        set((s) => ({ body: { ...s.body, startWeight: Math.min(300, Math.max(30, kg)) } })),
       setHeight: (cm) =>
         set((s) => ({
           profile: s.profile ? { ...s.profile, heightCm: Math.min(220, Math.max(120, cm)) } : s.profile,
@@ -229,12 +254,16 @@ export const useStore = create<Store>()(
           logged: withSets(s.logged, date, exName, plannedSets, (sets) => sets.filter((_, j) => j !== i)),
         })),
       setNote: (date, text) => set((s) => ({ notes: { ...s.notes, [date]: text } })),
-      finishSession: (date, dayName, exercises) =>
+      finishSession: (date, dayName, exercises) => {
+        // Build the summary once and return it so the caller (Train) can key the
+        // fire-and-forget feed post by the exact SessionSummary.id it stored.
+        const summary = sessionFromDay(get().logged, date, dayName, exercises);
         set((s) => {
-          const summary = sessionFromDay(s.logged, date, dayName, exercises);
           const rest = s.sessions.filter((h) => !(h.date === date && h.name === dayName));
           return { sessions: [summary, ...rest] };
-        }),
+        });
+        return summary;
+      },
       discardDay: (date, exNames) =>
         set((s) => {
           const day = { ...(s.logged[date] || {}) };
@@ -321,6 +350,16 @@ export const useStore = create<Store>()(
         }),
       setActiveProgram: (id) =>
         set((s) => (s.programs[id] ? { activeProgramId: id } : {})),
+      // ---- import shared plans ----
+      importProgram: (program) => {
+        const id = makeId();
+        set((s) => {
+          const prog = cloneProgramForImport(program, id, now());
+          return { programs: { ...s.programs, [id]: prog }, activeProgramId: id };
+        });
+        return id;
+      },
+      importPlan: (plan) => set(() => ({ plan: clonePlanForImport(plan, makeId) })),
       setCustomDay: (date, day) =>
         set((s) => {
           const cid = customDayId(date);
@@ -486,6 +525,14 @@ export const useStore = create<Store>()(
             },
           };
         }),
+      pruneEmptyMeals: (date) =>
+        set((s) => {
+          const day = s.diary[date];
+          if (!day) return {};
+          const pruned = pruneEmptyMeals(day);
+          if (pruned === day) return {}; // nothing to prune
+          return { diary: { ...s.diary, [date]: pruned } };
+        }),
       dayTotals: (date) => calcDayTotals(get().diary[date]?.meals ?? []),
       // ---- food library ----
       addCustomFood: (food) => {
@@ -541,6 +588,7 @@ export const useStore = create<Store>()(
       setRest: (sec) =>
         set((s) => ({ settings: { ...s.settings, rest: Math.max(15, Math.min(600, Math.round(sec))) } })),
       setAutoRest: (on) => set((s) => ({ settings: { ...s.settings, autoRest: on } })),
+      setShareWorkouts: (on) => set((s) => ({ settings: { ...s.settings, shareWorkouts: on } })),
       setSex: (sex) => set((s) => ({ profile: { ...(s.profile ?? defaultProfile()), sex } })),
       setAge: (age) =>
         set((s) => ({ profile: { ...(s.profile ?? defaultProfile()), age: Math.max(13, Math.min(100, Math.round(age))) } })),
@@ -592,6 +640,9 @@ export const useStore = create<Store>()(
         set({ ...next }); // shallow-merge: replaces data fields, keeps actions + hydrated.
       },
       resetAll: () => set({ ...emptyState() }),
+      // ---- sync foundation ----
+      getSyncMeta: () => getSyncMeta(),
+      setLastSyncedAt: (t) => setLastSyncedAt(t),
     }),
     {
       name: "fitrack",
@@ -604,9 +655,11 @@ export const useStore = create<Store>()(
         const {
           hydrated: _h,
           setHydrated: _sh,
+          setUserId: _sui,
           reset: _r,
           setBw: _sb,
           setGoal: _sg,
+          setStartWeight: _ssw,
           setHeight: _sht,
           deleteSession: _ds,
           setLoggedSet: _sls,
@@ -626,6 +679,8 @@ export const useStore = create<Store>()(
           renameProgram: _rp,
           deleteProgram: _dp,
           setActiveProgram: _sap,
+          importProgram: _ip,
+          importPlan: _ipl,
           setCustomDay: _scd,
           startFreestyle: _sf,
           clearCustomDay: _ccd,
@@ -641,6 +696,7 @@ export const useStore = create<Store>()(
           renameLoggedMeal: _rnlm,
           removeLoggedMeal: _rlm,
           removeLoggedItem: _rli,
+          pruneEmptyMeals: _pem,
           dayTotals: _dt,
           addCustomFood: _acf,
           allFoods: _af,
@@ -653,6 +709,7 @@ export const useStore = create<Store>()(
           setTheme: _st,
           setRest: _sr,
           setAutoRest: _sar,
+          setShareWorkouts: _ssw2,
           setSex: _ssx,
           setAge: _sag,
           setActivity: _sac,
@@ -662,6 +719,8 @@ export const useStore = create<Store>()(
           exportState: _es,
           importState: _is,
           resetAll: _ra,
+          getSyncMeta: _gsm,
+          setLastSyncedAt: _slsa,
           ...data
         } = s;
         return data as State;
