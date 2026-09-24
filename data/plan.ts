@@ -1,0 +1,101 @@
+import type { MuscleGroup } from "@/data/muscles";
+
+export type PlanExercise = { name: string; muscle: MuscleGroup; sets: number; reps: string; start: number };
+export type PlanDay = { id: string; label: string; name: string; focus: string; tags: MuscleGroup[]; ex: PlanExercise[] };
+
+export const PLAN: PlanDay[] = [
+  {
+    id: "d1",
+    label: "Day 1",
+    name: "Push A",
+    focus: "Chest lead",
+    tags: ["Chest", "Shoulders", "Arms", "Core"],
+    ex: [
+      { name: "Barbell Bench Press", muscle: "Chest", sets: 4, reps: "6–8", start: 35 },
+      { name: "Incline Dumbbell Press", muscle: "Chest", sets: 3, reps: "8–10", start: 14 },
+      { name: "Seated Dumbbell Shoulder Press", muscle: "Shoulders", sets: 3, reps: "8–10", start: 12 },
+      { name: "Cable Fly", muscle: "Chest", sets: 3, reps: "12–15", start: 10 },
+      { name: "Overhead Cable Triceps Ext.", muscle: "Arms", sets: 3, reps: "12–15", start: 15 },
+      { name: "Lateral Raise", muscle: "Shoulders", sets: 3, reps: "15", start: 6 },
+      { name: "Cable Crunch", muscle: "Core", sets: 3, reps: "12–15", start: 20 },
+    ],
+  },
+  {
+    id: "d2",
+    label: "Day 2",
+    name: "Pull A",
+    focus: "Back width",
+    tags: ["Back", "Arms", "Core"],
+    ex: [
+      { name: "Lat Pulldown", muscle: "Back", sets: 4, reps: "8–10", start: 40 },
+      { name: "Chest-Supported Row", muscle: "Back", sets: 3, reps: "8–10", start: 30 },
+      { name: "Seated Cable Row", muscle: "Back", sets: 3, reps: "10–12", start: 40 },
+      { name: "Face Pull", muscle: "Shoulders", sets: 3, reps: "15", start: 15 },
+      { name: "Barbell Curl", muscle: "Arms", sets: 3, reps: "8–10", start: 20 },
+      { name: "Hammer Curl", muscle: "Arms", sets: 3, reps: "12", start: 10 },
+      { name: "Hanging Knee Raise", muscle: "Core", sets: 3, reps: "12", start: 0 },
+    ],
+  },
+  {
+    id: "d3",
+    label: "Day 3",
+    name: "Legs A",
+    focus: "Quad lead",
+    tags: ["Legs", "Core"],
+    ex: [
+      { name: "Back Squat", muscle: "Legs", sets: 4, reps: "6–8", start: 40 },
+      { name: "Leg Press", muscle: "Legs", sets: 3, reps: "10–12", start: 80 },
+      { name: "Romanian Deadlift", muscle: "Legs", sets: 3, reps: "8–10", start: 40 },
+      { name: "Leg Extension", muscle: "Legs", sets: 3, reps: "12–15", start: 30 },
+      { name: "Standing Calf Raise", muscle: "Legs", sets: 4, reps: "12–15", start: 40 },
+      { name: "Side Plank (log seconds)", muscle: "Core", sets: 3, reps: "30s/side", start: 0 },
+    ],
+  },
+  {
+    id: "d4",
+    label: "Day 4",
+    name: "Push B",
+    focus: "Shoulder lead",
+    tags: ["Shoulders", "Chest", "Arms", "Core"],
+    ex: [
+      { name: "Standing Overhead Press", muscle: "Shoulders", sets: 4, reps: "5–7", start: 25 },
+      { name: "Flat Dumbbell Press", muscle: "Chest", sets: 3, reps: "8–10", start: 16 },
+      { name: "Incline Dumbbell Fly", muscle: "Chest", sets: 3, reps: "12", start: 8 },
+      { name: "Lateral Raise", muscle: "Shoulders", sets: 4, reps: "12–15", start: 6 },
+      { name: "Dips (assisted if needed)", muscle: "Arms", sets: 3, reps: "8–10", start: 0 },
+      { name: "Rope Pushdown", muscle: "Arms", sets: 3, reps: "12–15", start: 20 },
+      { name: "Pallof Press", muscle: "Core", sets: 3, reps: "12/side", start: 15 },
+    ],
+  },
+  {
+    id: "d5",
+    label: "Day 5",
+    name: "Pull B",
+    focus: "Back thickness",
+    tags: ["Back", "Arms", "Core"],
+    ex: [
+      { name: "Deadlift", muscle: "Back", sets: 3, reps: "5", start: 60 },
+      { name: "Pull-Up (assisted if needed)", muscle: "Back", sets: 3, reps: "6–8", start: 0 },
+      { name: "Barbell Row", muscle: "Back", sets: 3, reps: "8–10", start: 35 },
+      { name: "Single-Arm Dumbbell Row", muscle: "Back", sets: 3, reps: "10–12", start: 16 },
+      { name: "Rear Delt Fly", muscle: "Shoulders", sets: 3, reps: "15", start: 6 },
+      { name: "Incline Dumbbell Curl", muscle: "Arms", sets: 3, reps: "10–12", start: 8 },
+      { name: "Ab Wheel Rollout", muscle: "Core", sets: 3, reps: "8–10", start: 0 },
+    ],
+  },
+  {
+    id: "d6",
+    label: "Day 6",
+    name: "Legs B",
+    focus: "Posterior chain",
+    tags: ["Legs", "Core"],
+    ex: [
+      { name: "Hack Squat", muscle: "Legs", sets: 3, reps: "8–10", start: 50 },
+      { name: "Bulgarian Split Squat", muscle: "Legs", sets: 3, reps: "8–10", start: 8 },
+      { name: "Seated Leg Curl", muscle: "Legs", sets: 3, reps: "12–15", start: 25 },
+      { name: "Barbell Hip Thrust", muscle: "Legs", sets: 3, reps: "10–12", start: 50 },
+      { name: "Seated Calf Raise", muscle: "Legs", sets: 4, reps: "15", start: 20 },
+      { name: "Plank (log seconds)", muscle: "Core", sets: 3, reps: "45s", start: 0 },
+    ],
+  },
+];
