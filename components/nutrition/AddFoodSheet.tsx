@@ -223,15 +223,25 @@ export function AddFoodSheet({
   }
 
   // ----- search / list -----
+  const needle = q.trim();
+  const openCustom = (prefill = "") => {
+    setForm({ ...emptyForm, name: prefill });
+    setCustomMode(true);
+  };
+  // One unified list: local foods first, then OpenFoodFacts, no source sections.
+  const noResults = local.length === 0 && offResults.length === 0 && !offLoading;
+
   return (
     <Sheet title={title} onClose={onClose}>
       {addedCount > 0 && (
         <div className="afs-added">Added ✓ — add another, or Done when finished.</div>
       )}
-      <input className="search" value={q} autoFocus autoComplete="off" placeholder="Search foods…"
+      <input className="search" value={q} autoFocus autoComplete="off"
+        placeholder="Search foods — or add your own below"
         onChange={(e) => setQ(e.target.value)} />
-      <button className="btn ghost custom-cta" onClick={() => setCustomMode(true)}>
-        <Icon name="plus" /> Custom food
+      {/* Always-visible discoverability entry; the empty-state CTA is the emphasis. */}
+      <button className="btn ghost custom-cta" onClick={() => openCustom(needle)}>
+        <Icon name="plus" /> Add custom food
       </button>
 
       <div className="foodlist">
@@ -244,16 +254,6 @@ export function AddFoodSheet({
             <span className="foodrow-kcal cond">{f.kcal} kcal · {f.p}P /100{f.base}</span>
           </button>
         ))}
-        {local.length === 0 && offResults.length === 0 && !offLoading && (
-          <div className="empty">No local foods match “{q}”. Try a custom food{online ? " or OpenFoodFacts" : ""}.</div>
-        )}
-
-        {/* OpenFoodFacts section */}
-        <div className="off-head">
-          <span className="upper">OpenFoodFacts</span>
-          {!online && <span className="off-note">needs connection</span>}
-          {online && offLoading && <span className="off-note">searching…</span>}
-        </div>
         {online &&
           offResults.map((f) => (
             <button key={f.id} className="foodrow" onClick={() => choose(f)}>
@@ -263,8 +263,23 @@ export function AddFoodSheet({
               <span className="foodrow-kcal cond">{f.kcal} kcal · {f.p}P /100{f.base}</span>
             </button>
           ))}
-        {online && !offLoading && q.trim().length >= 2 && offResults.length === 0 && (
-          <div className="off-note off-empty">No OpenFoodFacts matches.</div>
+
+        {online && offLoading && (
+          <div className="foodrow-loading">
+            <span className="spinner" aria-hidden /> Searching more foods…
+          </div>
+        )}
+
+        {noResults && needle.length >= 2 && (
+          <div className="nofood">
+            <p className="nofood-msg">No foods found for “{needle}”.</p>
+            <button className="btn primary nofood-cta" onClick={() => openCustom(needle)}>
+              <Icon name="plus" /> Add “{needle}” as a custom food
+            </button>
+          </div>
+        )}
+        {noResults && needle.length < 2 && (
+          <div className="empty sm">Type at least 2 characters to search more foods.</div>
         )}
       </div>
 

@@ -61,6 +61,22 @@ export default function ProgressPage() {
   const strk = streak(sessions, today);
   const hist = sessions.slice(0, 20);
 
+  // Bodyweight trend: history is stored sorted by date, but sort defensively.
+  const wHist = [...body.history].sort((a, b) => a.date.localeCompare(b.date));
+  const hasTrend = wHist.length >= 2;
+  const trendPts = wHist.slice(-30).map((p) => ({ kg: massToDisplay(p.kg, unit) }));
+  let deltaTxt: string | null = null;
+  let deltaTowardGoal = false;
+  if (hasTrend) {
+    const prev = massToDisplay(wHist[wHist.length - 2].kg, unit);
+    const last = massToDisplay(wHist[wHist.length - 1].kg, unit);
+    const d = last - prev;
+    if (Math.abs(d) >= 0.05) {
+      deltaTxt = `${d > 0 ? "▲" : "▼"} ${Math.abs(d).toFixed(1)} ${u} vs last entry`;
+      deltaTowardGoal = cut ? d < 0 : d > 0;
+    }
+  }
+
   // Local editable strings, resynced when the stored value or unit changes.
   // Uses the React "adjust state during render" pattern (a signature guard) rather than
   // effects, so store-driven changes reflect without cascading set-state-in-effect renders.
@@ -98,7 +114,7 @@ export default function ProgressPage() {
   return (
     <main>
       <div className="dash">
-      <div className="dashcard">
+      <div className="dashcard wide">
       <div className="section-h">
         <h2>Bodyweight</h2>
         <span className="sub">{cut ? "cut" : "bulk"} target</span>
@@ -172,7 +188,24 @@ export default function ProgressPage() {
             {cmToFtIn(heightCm)} · {Math.round(heightCm)} cm
           </span>
         </div>
-        <Sparkline pts={body.history.slice(-14).map((p) => ({ kg: massToDisplay(p.kg, unit) }))} />
+        <div className="wtrend">
+          <div className="wtrend-h">
+            <span className="wtrend-lbl">Weight trend</span>
+            {deltaTxt && (
+              <span
+                className="wtrend-delta"
+                style={{ color: deltaTowardGoal ? "var(--accent)" : "var(--muted)" }}
+              >
+                {deltaTxt}
+              </span>
+            )}
+          </div>
+          {hasTrend ? (
+            <Sparkline pts={trendPts} />
+          ) : (
+            <div className="wtrend-hint">Log your weight over a few days to see your trend.</div>
+          )}
+        </div>
         <div className="stat" style={{ marginTop: 6, gridTemplateColumns: "repeat(3,1fr)" }}>
           <div className="macro">
             <b className="cond" style={{ color: strk ? "var(--gold)" : "var(--dim)" }}>{strk}</b>
@@ -191,6 +224,7 @@ export default function ProgressPage() {
       </div>
 
       {sessions.length > 0 && (
+        <div className="dash-secondary">
         <div className="dashcard">
           <div className="section-h">
             <h2>Consistency</h2>
@@ -208,9 +242,8 @@ export default function ProgressPage() {
             <Heatmap sessions={sessions} today={today} />
           </section>
         </div>
-      )}
 
-      {sessions.length >= 2 && (
+        {sessions.length >= 2 && (
         <div className="dashcard">
           <div className="section-h">
             <h2>Weekly volume</h2>
@@ -219,6 +252,8 @@ export default function ProgressPage() {
           <section className="panel" style={{ padding: "14px 16px" }}>
             <VolumeChart sessions={sessions} today={today} />
           </section>
+        </div>
+        )}
         </div>
       )}
 
