@@ -172,6 +172,12 @@ export function isExdbLoaded(): boolean {
   return EXDB != null;
 }
 
+/** All loaded source-A entries (empty until loadExdb resolves). Used by the merged
+    catalog (lib/catalog.ts) to seed its base of ~800 exercises. */
+export function allExdb(): ExdbEntry[] {
+  return EXDB || [];
+}
+
 /* ---- test seams: inject a fake in-memory EXDB without any network ---- */
 export function _seedExdb(raw: ExdbRaw[]): void {
   exProcess(raw);

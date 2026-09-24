@@ -1,64 +1,60 @@
 "use client";
 
-// Exercise library — a LIVE, filterable catalog powered by the AscendAPI ExerciseDB v2
-// API (via the /api/edb proxy). Unlike the rest of the app (local-first), catalog
-// browsing is intentionally ONLINE: a debounced search box + Body Part / Equipment /
-// Type / Target-muscle filters re-query the API; results stream into a card grid with
-// cursor-based "Load more". Tapping a card opens the how-to modal BY ID (openExerciseById),
-// which pulls the EDB detail record directly. The curated data/library.ts is untouched —
-// it still backs the add-to-program picker.
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+// Exercise library — a LOCAL, offline-first, filterable catalog. Backed by lib/catalog.ts,
+// which merges free-exercise-db (~800, source A) with the AscendAPI ExerciseDB list (~200,
+// source C: adds VIDEO + rich detail) into ONE index searched entirely client-side. No more
+// 200-cap, no per-keystroke network: once loaded (both sources cached in IndexedDB) it works
+// fully offline. A search box + Muscle / Equipment dropdowns filter in place; "Load more"
+// pages the local slice. Tapping a card opens the how-to modal by id (video + rich detail)
+// when the exercise has an AscendAPI match, else by name (source-A image + instructions).
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  searchExercises,
-  getBodyParts,
-  getEquipments,
-  getExerciseTypes,
-  getMuscles,
-  EdbCatalogError,
-  type EdbListItem,
-  type EdbQuery,
-  type EdbRef,
-} from "@/lib/edbCatalog";
+  loadCatalog,
+  searchCatalog,
+  catalogFacets,
+  toMuscleGroup,
+  type CatalogItem,
+} from "@/lib/catalog";
 import { useExerciseModal } from "@/components/exercise/ExerciseModalProvider";
 import { initials } from "@/components/exercise/Thumb";
 
 const PAGE = 24;
 const cap = (s: string): string => (s ? s[0].toUpperCase() + s.slice(1) : s);
-const pretty = (s: string): string => cap(s.replace(/_/g, " ").toLowerCase());
+const title = (s: string): string => s.split(" ").map(cap).join(" ");
 
 function CatCard({
   item,
   onOpen,
   onChip,
 }: {
-  item: EdbListItem;
+  item: CatalogItem;
   onOpen: () => void;
-  onChip: (param: "bodyParts" | "equipments", value: string) => void;
+  onChip: (kind: "muscle" | "equipment", value: string) => void;
 }) {
   const [broken, setBroken] = useState(false);
-  const bp = item.bodyParts[0];
-  const eq = item.equipments[0];
+  const muscle = item.muscles[0];
+  const equip = item.equipment[0];
   // Chips filter the catalog in place. They live inside the card <button>, so they are
   // spans (not nested buttons) with stopPropagation to avoid also opening the modal.
-  const chip = (param: "bodyParts" | "equipments", value: string) => (
+  const chip = (kind: "muscle" | "equipment", value: string) => (
     <span
       className="chip chip-tap"
       role="button"
       tabIndex={0}
       onClick={(ev) => {
         ev.stopPropagation();
-        onChip(param, value);
+        onChip(kind, value);
       }}
       onKeyDown={(ev) => {
         if (ev.key === "Enter" || ev.key === " ") {
           ev.preventDefault();
           ev.stopPropagation();
-          onChip(param, value);
+          onChip(kind, value);
         }
       }}
     >
-      {pretty(value)}
+      {title(value)}
     </span>
   );
   return (
@@ -70,17 +66,18 @@ function CatCard({
         ) : (
           <span className="ph">{initials(item.name)}</span>
         )}
+        {item.hasVideo && <span className="vidbadge">Video</span>}
       </div>
       <div className="libnm">{cap(item.name)}</div>
       <div className="catchips">
-        {bp && chip("bodyParts", bp)}
-        {eq && chip("equipments", eq)}
+        {muscle && chip("muscle", muscle)}
+        {equip && chip("equipment", equip)}
       </div>
     </button>
   );
 }
 
-/** A single-select dropdown populated from an EDB reference list. */
+/** A single-select dropdown of facet values (title-cased display). */
 function FilterSelect({
   label,
   value,
@@ -89,7 +86,7 @@ function FilterSelect({
 }: {
   label: string;
   value: string;
-  options: EdbRef[];
+  options: string[];
   onChange: (v: string) => void;
 }) {
   return (
@@ -101,157 +98,99 @@ function FilterSelect({
     >
       <option value="">{label}</option>
       {options.map((o) => (
-        <option key={o.name} value={o.name}>
-          {pretty(o.name)}
+        <option key={o} value={o}>
+          {title(o)}
         </option>
       ))}
     </select>
   );
 }
 
+// Map an incoming URL param value (from a tapped detail-modal chip — AscendAPI vocabulary
+// like "TRICEPS BRACHII" / "BARBELL", or a free-db lowercase value) onto a facet value.
+const toMuscleFacet = (v: string): string => (v ? toMuscleGroup(v) || "" : "");
+const toEquipFacet = (v: string): string => v.trim().toLowerCase();
+
 function LibraryContent() {
-  const { openExerciseById } = useExerciseModal();
+  const { openExercise, openExerciseById } = useExerciseModal();
   const params = useSearchParams();
 
-  // Seed the filters from the URL query so a deep link (e.g. from a tapped tag in the
-  // detail modal) lands on a pre-filtered catalog. Values match the AscendAPI vocabulary
-  // (UPPERCASE), which is exactly what the dropdown <option> values use, so the matching
-  // filter dropdown also shows the active value.
+  const [ready, setReady] = useState(false);
+
+  // Seed filters from the URL query so a deep link (e.g. a tapped tag in the detail modal,
+  // which pushes AscendAPI-vocabulary values) lands on a pre-filtered catalog. Incoming
+  // muscle values (targetMuscles / bodyParts) run through toMuscleGroup; equipment lowercases.
   const [rawQuery, setRawQuery] = useState(() => params.get("search") ?? "");
   const [search, setSearch] = useState(() => params.get("search") ?? ""); // debounced
-  const [bodyPart, setBodyPart] = useState(() => params.get("bodyParts") ?? "");
-  const [equipment, setEquipment] = useState(() => params.get("equipments") ?? "");
-  const [exType, setExType] = useState(() => params.get("exerciseType") ?? "");
-  const [muscle, setMuscle] = useState(() => params.get("targetMuscles") ?? "");
+  const [muscle, setMuscle] = useState(() =>
+    toMuscleFacet(params.get("targetMuscles") || params.get("bodyParts") || ""),
+  );
+  const [equipment, setEquipment] = useState(() => toEquipFacet(params.get("equipments") ?? ""));
 
-  // Re-seed when the query string changes via navigation while the page is already mounted
-  // (e.g. a modal chip on the Library route pushes /library?bodyParts=…). Lazy initial
-  // state only runs on first mount, so this adjust-during-render guard — keyed on the
-  // string form of the params — handles the same-route case without a set-state-in-effect
-  // cascade. User dropdown changes don't touch the URL, so they never trip it.
+  // Re-seed when the query string changes via navigation while already mounted (a modal chip
+  // on the /library route pushes new params). Adjust-during-render guard keyed on the string
+  // form of the params — no set-state-in-effect cascade.
   const spString = params.toString();
   const [prevSp, setPrevSp] = useState(spString);
   if (prevSp !== spString) {
     setPrevSp(spString);
     setRawQuery(params.get("search") ?? "");
     setSearch(params.get("search") ?? "");
-    setBodyPart(params.get("bodyParts") ?? "");
-    setEquipment(params.get("equipments") ?? "");
-    setExType(params.get("exerciseType") ?? "");
-    setMuscle(params.get("targetMuscles") ?? "");
+    setMuscle(toMuscleFacet(params.get("targetMuscles") || params.get("bodyParts") || ""));
+    setEquipment(toEquipFacet(params.get("equipments") ?? ""));
   }
 
-  const [bodyParts, setBodyParts] = useState<EdbRef[]>([]);
-  const [equipments, setEquipments] = useState<EdbRef[]>([]);
-  const [types, setTypes] = useState<EdbRef[]>([]);
-  const [muscles, setMuscles] = useState<EdbRef[]>([]);
+  const [page, setPage] = useState(0);
 
-  const [items, setItems] = useState<EdbListItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasNext, setHasNext] = useState(false);
-
-  const [loading, setLoading] = useState(true); // initial / re-query load
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [reloadKey, setReloadKey] = useState(0); // bump to force a re-query (retry)
-
-  // Debounce the search box (~300ms).
-  useEffect(() => {
-    const t = setTimeout(() => setSearch(rawQuery.trim()), 300);
-    return () => clearTimeout(t);
-  }, [rawQuery]);
-
-  // Load the reference lists once (cached). Failures leave the dropdowns empty but the
-  // search box still works, so we swallow them here.
-  useEffect(() => {
-    getBodyParts().then(setBodyParts).catch(() => {});
-    getEquipments().then(setEquipments).catch(() => {});
-    getExerciseTypes().then(setTypes).catch(() => {});
-    getMuscles().then(setMuscles).catch(() => {});
-  }, []);
-
-  const query = useMemo<EdbQuery>(
-    () => ({
-      search: search || undefined,
-      bodyParts: bodyPart ? [bodyPart] : undefined,
-      equipments: equipment ? [equipment] : undefined,
-      exerciseType: exType || undefined,
-      targetMuscles: muscle ? [muscle] : undefined,
-      limit: PAGE,
-    }),
-    [search, bodyPart, equipment, exType, muscle],
-  );
-
-  // Entering a new query (filter change or retry): flag loading + clear the previous
-  // error/results synchronously DURING render (guarded adjust-during-render — not an
-  // effect — so it doesn't trip the cascading-set-state-in-effect rule).
-  const queryKey = useMemo(() => JSON.stringify(query) + ":" + reloadKey, [query, reloadKey]);
-  const [shownKey, setShownKey] = useState<string | null>(null);
-  if (shownKey !== queryKey) {
-    setShownKey(queryKey);
-    setLoading(true);
-    setError(null);
-  }
-
-  // Re-query from scratch whenever the search or any filter changes.
+  // Load the merged catalog once. If the AscendAPI fetch fails, source A (~800) still shows.
   useEffect(() => {
     let alive = true;
-    searchExercises(query)
-      .then((res) => {
-        if (!alive) return;
-        setItems(res.items);
-        setTotal(res.total);
-        setCursor(res.nextCursor);
-        setHasNext(res.hasNextPage);
-      })
-      .catch((e) => {
-        if (!alive) return;
-        setItems([]);
-        setTotal(0);
-        setCursor(null);
-        setHasNext(false);
-        setError(e instanceof EdbCatalogError ? e.message : "Something went wrong loading the catalog.");
-      })
-      .finally(() => {
-        if (alive) setLoading(false);
-      });
+    loadCatalog().then(() => {
+      if (alive) setReady(true);
+    });
     return () => {
       alive = false;
     };
-  }, [query, reloadKey]);
+  }, []);
 
-  const loadMore = useCallback(() => {
-    if (!cursor || loadingMore) return;
-    setLoadingMore(true);
-    searchExercises({ ...query, after: cursor })
-      .then((res) => {
-        setItems((prev) => [...prev, ...res.items]);
-        setCursor(res.nextCursor);
-        setHasNext(res.hasNextPage);
-      })
-      .catch((e) => {
-        setError(e instanceof EdbCatalogError ? e.message : "Something went wrong loading more.");
-        setHasNext(false);
-      })
-      .finally(() => setLoadingMore(false));
-  }, [cursor, loadingMore, query]);
+  // Debounce the search box (~250ms).
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(rawQuery.trim()), 250);
+    return () => clearTimeout(t);
+  }, [rawQuery]);
 
-  const anyFilter = Boolean(search || bodyPart || equipment || exType || muscle);
+  const filters = useMemo(
+    () => ({ text: search || undefined, muscle: muscle || undefined, equipment: equipment || undefined }),
+    [search, muscle, equipment],
+  );
+
+  // Reset pagination whenever the filters change (adjust-during-render guard).
+  const filterKey = useMemo(() => JSON.stringify(filters), [filters]);
+  const [shownKey, setShownKey] = useState(filterKey);
+  if (shownKey !== filterKey) {
+    setShownKey(filterKey);
+    setPage(0);
+  }
+
+  const facets = useMemo(() => (ready ? catalogFacets() : { muscles: [], equipment: [] }), [ready]);
+  const result = useMemo(
+    () => (ready ? searchCatalog(filters, 0, (page + 1) * PAGE) : { items: [], total: 0, hasMore: false }),
+    [ready, filters, page],
+  );
+
+  const anyFilter = Boolean(search || muscle || equipment);
   const clearAll = () => {
     setRawQuery("");
     setSearch("");
-    setBodyPart("");
-    setEquipment("");
-    setExType("");
     setMuscle("");
+    setEquipment("");
   };
 
   return (
     <main>
       <div className="section-h">
         <h2>Exercise library</h2>
-        <span className="sub">{loading ? "Loading…" : error ? "Offline" : `${total} moves`}</span>
+        <span className="sub">{!ready ? "Loading…" : `${result.total} moves`}</span>
       </div>
 
       <input
@@ -265,10 +204,8 @@ function LibraryContent() {
       />
 
       <div className="filterbar">
-        <FilterSelect label="Body part" value={bodyPart} options={bodyParts} onChange={setBodyPart} />
-        <FilterSelect label="Equipment" value={equipment} options={equipments} onChange={setEquipment} />
-        <FilterSelect label="Type" value={exType} options={types} onChange={setExType} />
-        <FilterSelect label="Target muscle" value={muscle} options={muscles} onChange={setMuscle} />
+        <FilterSelect label="Muscle" value={muscle} options={facets.muscles} onChange={setMuscle} />
+        <FilterSelect label="Equipment" value={equipment} options={facets.equipment} onChange={setEquipment} />
         {anyFilter && (
           <button className="fpill" onClick={clearAll}>
             Clear
@@ -276,15 +213,7 @@ function LibraryContent() {
         )}
       </div>
 
-      {error ? (
-        <div className="empty catstate">
-          <div className="catstate-t">Catalog needs a connection</div>
-          <div>{error}</div>
-          <button className="btn sm" style={{ marginTop: 12 }} onClick={() => setReloadKey((k) => k + 1)}>
-            Retry
-          </button>
-        </div>
-      ) : loading ? (
+      {!ready ? (
         <div className="libgrid">
           {Array.from({ length: 8 }).map((_, i) => (
             <div key={i} className="libcard skel">
@@ -294,24 +223,26 @@ function LibraryContent() {
             </div>
           ))}
         </div>
-      ) : items.length ? (
+      ) : result.items.length ? (
         <>
           <div className="libgrid">
-            {items.map((it) => (
+            {result.items.map((it) => (
               <CatCard
-                key={it.id}
+                key={it.key}
                 item={it}
-                onOpen={() => openExerciseById(it.id, cap(it.name))}
-                onChip={(param, value) => {
-                  if (param === "bodyParts") setBodyPart(value);
+                onOpen={() =>
+                  it.edbId ? openExerciseById(it.edbId, cap(it.name)) : openExercise(it.name)
+                }
+                onChip={(kind, value) => {
+                  if (kind === "muscle") setMuscle(value);
                   else setEquipment(value);
                 }}
               />
             ))}
           </div>
-          {hasNext && (
-            <button className="btn loadmore" onClick={loadMore} disabled={loadingMore}>
-              {loadingMore ? "Loading…" : "Load more"}
+          {result.hasMore && (
+            <button className="btn loadmore" onClick={() => setPage((p) => p + 1)}>
+              Load more
             </button>
           )}
         </>
