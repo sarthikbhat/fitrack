@@ -3508,10 +3508,16 @@ main .libgrid {
 }
 .profile-hero {
   display: flex;
-  align-items: center;
-  gap: 18px;
-  padding: 22px;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
   margin-top: 8px;
+}
+.profile-hero-main {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
 }
 .profile-id {
   min-width: 0;
@@ -3523,6 +3529,8 @@ main .libgrid {
   font-weight: 700;
   letter-spacing: 0.01em;
   color: var(--text);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 .profile-handle {
   margin-top: 2px;
@@ -3550,15 +3558,18 @@ main .libgrid {
 
 /* --- follow: profile hero social block (counts + action) --- */
 .profile-social {
-  flex-shrink: 0;
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  width: 100%;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
 }
 .follow-counts {
   display: flex;
-  gap: 16px;
+  gap: 18px;
 }
 .follow-count {
   font-size: 12px;

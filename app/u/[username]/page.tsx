@@ -41,11 +41,13 @@ export default async function ProfilePage({
   return (
     <main className="profile-page">
       <section className="profile-hero panel">
-        <Avatar src={profile.avatar_url} name={displayName} size={88} />
-        <div className="profile-id">
-          <h1 className="profile-name">{displayName}</h1>
-          {profile.username && <div className="profile-handle">@{profile.username}</div>}
-          {joined && <div className="profile-joined">Joined {joined}</div>}
+        <div className="profile-hero-main">
+          <Avatar src={profile.avatar_url} name={displayName} size={72} />
+          <div className="profile-id">
+            <h1 className="profile-name">{displayName}</h1>
+            {profile.username && <div className="profile-handle">@{profile.username}</div>}
+            {joined && <div className="profile-joined">Joined {joined}</div>}
+          </div>
         </div>
         <ProfileFollow
           profileId={profile.id}
