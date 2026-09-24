@@ -32,8 +32,12 @@ export default async function ProfilePage({
   const profile = await getProfileByUsername(username, server);
   if (!profile) notFound();
 
-  const counts = await getFollowCounts(profile.id, server);
-  const activity = await getUserActivity(profile.id, server);
+  // counts + activity are independent - fetch them in parallel (one round-trip
+  // instead of two) to cut the profile page's load latency.
+  const [counts, activity] = await Promise.all([
+    getFollowCounts(profile.id, server),
+    getUserActivity(profile.id, server),
+  ]);
 
   const displayName = profile.display_name || profile.username || "Athlete";
   const joined = joinedLabel(profile.created_at);

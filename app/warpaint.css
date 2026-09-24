@@ -4464,6 +4464,36 @@ main .libgrid {
   color: var(--accent);
 }
 
+/* ---------- skeletons ---------- */
+.sk {
+  background: linear-gradient(90deg, var(--panel2) 25%, var(--line) 37%, var(--panel2) 63%);
+  background-size: 400% 100%;
+  animation: sk-shimmer 1.2s ease-in-out infinite;
+  border-radius: 6px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk {
+    animation: none;
+  }
+}
+.sk-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+.sk-line {
+  border-radius: 6px;
+}
+@keyframes sk-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
 /* ---------- feed share hint ---------- */
 .feed-sharehint {
   display: flex;
