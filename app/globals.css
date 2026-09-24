@@ -4,8 +4,8 @@
 :root {
   --bg: #0b0d10;
   --bg2: #101318;
-  --panel: #14181e;
-  --panel2: #1a1f27;
+  --panel: #161b22;
+  --panel2: #1e242d;
   --line: #23272e;
   --line2: #2e343d;
   --text: #e8ebf0;
@@ -23,7 +23,8 @@
   --macro-f: #a855f7;
   --r: 12px;
   --rs: 8px;
-  --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 10px 28px -14px rgba(0, 0, 0, 0.7);
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.05) inset, 0 2px 4px rgba(0, 0, 0, 0.5),
+    0 16px 36px -12px rgba(0, 0, 0, 0.85);
   --maxw: 820px;
   --nav-h: 66px;
 
@@ -651,7 +652,7 @@ header.top {
 .dash-secondary {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 4px 20px;
+  gap: 16px 20px;
   align-items: start;
 }
 .goalrow {
@@ -3247,7 +3248,7 @@ nav.tabs {
   .dash {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 4px 20px;
+    gap: 16px 20px;
     /* stretch so paired cards in a row share the tallest height */
     align-items: stretch;
   }
@@ -3489,6 +3490,8 @@ main .libgrid {
 /* --- public profile page --- */
 .profile-page {
   max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .profile-hero {
   display: flex;
@@ -3573,6 +3576,8 @@ main .libgrid {
 /* --- find people (search + follow) --- */
 .people-page {
   max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
 }
 .people-head {
   margin: 8px 2px 16px;
@@ -3783,14 +3788,22 @@ main .libgrid {
   color: var(--text);
 }
 .share-top {
+  padding: 16px 0;
+  padding-top: max(16px, env(safe-area-inset-top));
+  border-bottom: 1px solid var(--line);
+  background: linear-gradient(180deg, var(--panel), var(--bg2));
+}
+/* Constrain the standalone header to the same centered column + gutters as the
+   body (.share-main), so brand/chip align with the content instead of the edge. */
+.share-top-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 16px 20px calc(16px + env(safe-area-inset-top));
-  padding-top: max(16px, env(safe-area-inset-top));
-  border-bottom: 1px solid var(--line);
-  background: linear-gradient(180deg, var(--panel), var(--bg2));
+  width: 100%;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 16px;
 }
 .share-top .brand {
   font-weight: 800;
@@ -3882,7 +3895,7 @@ main .libgrid {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  padding: 16px;
+  padding: 18px;
 }
 /* The in-card header sits flush at the top; vertical rhythm comes from the
    home-card gap, not section-h's own default margins. */

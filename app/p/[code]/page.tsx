@@ -40,8 +40,10 @@ export default async function SharedPlanPage({
   return (
     <div className="share-page">
       <header className="share-top">
-        <span className="brand">Fitrack</span>
-        <span className="chip">Shared {share.kind === "program" ? "program" : "meal plan"}</span>
+        <div className="share-top-inner">
+          <span className="brand">Fitrack</span>
+          <span className="chip">Shared {share.kind === "program" ? "program" : "meal plan"}</span>
+        </div>
       </header>
 
       <main className="share-main">

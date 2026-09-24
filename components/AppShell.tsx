@@ -58,8 +58,13 @@ function Shell({ children }: { children: ReactNode }) {
 
 function Gate({ children }: { children: ReactNode }) {
   // Fresh install (no profile yet) → run the onboarding wizard instead of the app.
+  // Exception: public pages (a profile /u/<username>, people search) must be viewable
+  // by logged-out / data-less visitors, so they render inside the Shell without the
+  // onboarding redirect.
   const profile = useStore((s) => s.profile);
-  if (profile === null) return <Onboarding />;
+  const pathname = usePathname();
+  const isPublic = pathname?.startsWith("/u/") || pathname === "/people";
+  if (profile === null && !isPublic) return <Onboarding />;
   return <Shell>{children}</Shell>;
 }
 
