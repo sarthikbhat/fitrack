@@ -123,6 +123,61 @@ export async function getFollowCounts(
   };
 }
 
+/** A follower shown in the notifications bell: who followed you + whether you follow back. */
+export type FollowerNotice = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  createdAt: string | null;
+  youFollow: boolean;
+};
+
+/**
+ * The people who follow the signed-in user, newest first, joined with their public
+ * profile and a `youFollow` flag (do you already follow them back?). Backs the
+ * notifications bell. Returns [] when signed out / unconfigured / on error. No new
+ * table: derived from the existing `follows` edges + `profiles`.
+ */
+export async function getFollowers(limit = 50): Promise<FollowerNotice[]> {
+  const sb = getSupabase();
+  if (!sb) return [];
+  const uid = await currentUserId(sb);
+  if (!uid) return [];
+
+  const { data: edges, error } = await sb
+    .from("follows")
+    .select("follower, created_at")
+    .eq("followee", uid)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error || !edges || edges.length === 0) return [];
+
+  const ids = edges.map((e) => e.follower as string);
+  const [profRes, mineRes] = await Promise.all([
+    sb.from("profiles").select("id, username, display_name, avatar_url").in("id", ids),
+    sb.from("follows").select("followee").eq("follower", uid).in("followee", ids),
+  ]);
+
+  const pById = new Map(
+    (profRes.data ?? []).map((p) => [p.id as string, p as Record<string, unknown>]),
+  );
+  const following = new Set((mineRes.data ?? []).map((r) => r.followee as string));
+
+  return edges.map((e) => {
+    const fid = e.follower as string;
+    const p = pById.get(fid);
+    return {
+      id: fid,
+      username: (p?.username as string) ?? null,
+      display_name: (p?.display_name as string) ?? null,
+      avatar_url: (p?.avatar_url as string) ?? null,
+      createdAt: (e.created_at as string) ?? null,
+      youFollow: following.has(fid),
+    };
+  });
+}
+
 /**
  * Search public profiles by username OR display name (case-insensitive, partial).
  * Public read, so it works signed-out too. Returns [] for an empty query or when

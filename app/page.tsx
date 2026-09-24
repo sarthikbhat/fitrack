@@ -4,7 +4,9 @@
 // from the store and links out to the working views (Train / Nutrition / Progress /
 // Library). Every card degrades to a friendly first-run prompt when its data is empty.
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useStore } from "@/lib/store";
+import { getMyProfile } from "@/lib/profile";
 import { todayISO, addDays, weekdayIndex } from "@/lib/dates";
 import { activeDays, plannedForToday, dayExercises, logFor, exDone } from "@/lib/day";
 import { dayTotals } from "@/lib/macros";
@@ -33,9 +35,23 @@ export default function DashboardPage() {
   const programs = useStore((s) => s.programs);
   const activeProgramId = useStore((s) => s.activeProgramId);
 
+  // Cloud handle (username / display name) as a greeting fallback when no local
+  // profile name is set - e.g. a signed-in user on a fresh device.
+  const [handle, setHandle] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    getMyProfile().then((p) => {
+      if (alive) setHandle(p?.username || p?.display_name || null);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const date = todayISO();
   const unit: MassUnit = profile?.units.mass ?? "kg";
-  const firstName = (profile?.name || "").trim().split(/\s+/)[0] || "there";
+  const localName = (profile?.name || "").trim().split(/\s+/)[0];
+  const firstName = localName || handle || "there";
   const prettyToday = new Date(date + "T12:00:00Z").toLocaleDateString("en-GB", {
     weekday: "long",
     day: "numeric",

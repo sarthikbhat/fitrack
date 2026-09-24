@@ -11,6 +11,7 @@ import { PickerProvider } from "@/components/PickerProvider";
 import { SwitchProvider } from "@/components/SwitchProvider";
 import { SettingsProvider, useSettings } from "@/components/SettingsProvider";
 import { AccountControl } from "@/components/AccountControl";
+import { NotificationsBell } from "@/components/NotificationsBell";
 import { RestBar } from "@/components/RestBar";
 import { Onboarding } from "@/components/Onboarding";
 import { SyncManager } from "@/components/SyncManager";
@@ -24,6 +25,7 @@ function HeaderBar() {
     <header className="top">
       <span className="brand">Fitrack</span>
       <div className="top-actions">
+        <NotificationsBell />
         <button className="gearbtn" aria-label="Settings" onClick={openSettings}>
           <Icon name="gear" />
         </button>

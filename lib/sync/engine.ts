@@ -208,17 +208,27 @@ export async function runSync(opts?: { bootstrap?: boolean }): Promise<SyncResul
     const bootstrap = opts?.bootstrap ?? syncMeta.lastSyncedAt === 0;
     const now = Date.now();
 
+    // Pull BEFORE deciding whether to bootstrap-claim, so we can tell whether this
+    // account already holds data.
+    const since = bootstrap ? 0 : syncMeta.lastSyncedAt;
+    const remote = await pullRemote(supabase, since);
+    result.pulled = remote.length;
+
     // Bootstrap claim: stamp every current local unit dirty so all local data
-    // uploads and claims into the just-signed-in account.
-    if (bootstrap) {
+    // uploads and claims into the just-signed-in account. This is ONLY safe into an
+    // EMPTY account (the first device). On a populated account - e.g. signing in on
+    // a NEW device whose local store is just seeded defaults - claiming would stamp
+    // those defaults with `now`, beat the real (older-timestamped) cloud rows under
+    // last-write-wins, and overwrite the account with empty data (data loss). When
+    // the account already has rows we skip the claim and let LWW adopt the cloud
+    // data instead (remote timestamps > local seed timestamp of 0); any genuine
+    // local edits still carry real timestamps and merge normally.
+    if (bootstrap && remote.length === 0) {
       stampUnits(bootstrapUpdates(useStore.getState(), now));
       syncMeta = getSyncMeta();
     }
 
-    const since = bootstrap ? 0 : syncMeta.lastSyncedAt;
     const local = buildLocalUnits(useStore.getState(), syncMeta);
-    const remote = await pullRemote(supabase, since);
-    result.pulled = remote.length;
 
     const { toApplyLocal, toPushRemote } = planSync(
       local,
