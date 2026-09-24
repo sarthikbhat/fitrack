@@ -8,6 +8,7 @@ import { ExerciseModalProvider } from "@/components/exercise/ExerciseModalProvid
 import { PickerProvider } from "@/components/PickerProvider";
 import { SwitchProvider } from "@/components/SwitchProvider";
 import { SettingsProvider, useSettings } from "@/components/SettingsProvider";
+import { AccountControl } from "@/components/AccountControl";
 import { RestBar } from "@/components/RestBar";
 import { Onboarding } from "@/components/Onboarding";
 import { SyncManager } from "@/components/SyncManager";
@@ -19,9 +20,12 @@ function HeaderBar() {
   return (
     <header className="top">
       <span className="brand">Fitrack</span>
-      <button className="gearbtn" aria-label="Settings" onClick={openSettings}>
-        <Icon name="gear" />
-      </button>
+      <div className="top-actions">
+        <button className="gearbtn" aria-label="Settings" onClick={openSettings}>
+          <Icon name="gear" />
+        </button>
+        <AccountControl variant="header" />
+      </div>
     </header>
   );
 }

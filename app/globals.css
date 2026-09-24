@@ -802,16 +802,16 @@ nav.tabs {
 }
 
 /* ---------- progress ring (legacy:121-125,312-317) ---------- */
-.ring {
+.pring {
   position: relative;
   flex-shrink: 0;
 }
-.ring svg {
+.pring svg {
   transform: rotate(-90deg);
   position: relative;
   z-index: 1;
 }
-.ring .lbl {
+.pring .lbl {
   position: absolute;
   inset: 0;
   display: flex;
@@ -820,12 +820,12 @@ nav.tabs {
   justify-content: center;
   z-index: 1;
 }
-.ring .lbl b {
+.pring .lbl b {
   font-size: 19px;
   font-weight: 700;
   line-height: 1;
 }
-.ring .lbl span {
+.pring .lbl span {
   font-size: 9px;
   color: var(--dim);
   letter-spacing: 0.1em;
@@ -2966,6 +2966,9 @@ nav.tabs {
 }
 .snav-foot {
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 @media (min-width: 900px) {
@@ -3097,4 +3100,262 @@ main .libgrid {
 }
 .libcard {
   min-width: 0;
+}
+
+/* ============================================================================
+   Account presence — avatar, sidebar/header account block + menu, profile page.
+   All token-driven so both themes track automatically.
+   ============================================================================ */
+
+/* --- avatar --- */
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--accent) 16%, var(--panel2));
+  border: 1px solid var(--line2);
+}
+.avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.avatar-fallback {
+  font-family: var(--font-geist-sans);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--accent);
+  line-height: 1;
+}
+
+/* --- account control (shared trigger + popover menu) --- */
+.acct-root {
+  position: relative;
+}
+.acct-root-sidebar {
+  width: 100%;
+}
+
+/* sidebar: full-width block with avatar + name/username */
+.acct-block {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.16s, border-color 0.16s;
+}
+.acct-block:hover {
+  background: var(--panel2);
+  border-color: var(--line2);
+}
+.acct-block-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+.acct-name {
+  font-family: var(--font-geist-sans);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.acct-username {
+  font-size: 11.5px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* signed-out CTA (sidebar) */
+.acct-signin {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 4px 2px 2px;
+}
+.acct-signin .btn {
+  width: 100%;
+}
+.acct-signin-sub {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* header: compact avatar button + mini sign-in */
+.acct-avatar-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 999px;
+}
+.acct-avatar-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.acct-signin-mini {
+  font-family: var(--font-geist-sans);
+  font-weight: 600;
+  font-size: 12.5px;
+  color: #04120d;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+:root[data-theme="light"] .acct-signin-mini {
+  color: #ffffff;
+}
+
+.top-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* popover menu */
+.acct-menu {
+  position: absolute;
+  z-index: 60;
+  min-width: 180px;
+  padding: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--line2);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+/* sidebar menu opens upward, anchored to the block */
+.acct-menu-sidebar {
+  left: 0;
+  right: 0;
+  bottom: calc(100% + 8px);
+}
+/* header menu drops down from the avatar, right-aligned */
+.acct-menu-header {
+  right: 0;
+  top: calc(100% + 8px);
+}
+.acct-menu-item {
+  display: block;
+  width: 100%;
+  padding: 9px 10px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-geist-sans);
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.14s, color 0.14s;
+}
+.acct-menu-item:hover {
+  background: var(--panel2);
+}
+.acct-menu-item.danger {
+  color: var(--danger);
+}
+
+/* --- public profile page --- */
+.profile-page {
+  max-width: 640px;
+}
+.profile-hero {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 22px;
+  margin-top: 8px;
+}
+.profile-id {
+  min-width: 0;
+  flex: 1;
+}
+.profile-name {
+  font-family: var(--font-geist-sans);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+.profile-handle {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.profile-joined {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--dim);
+}
+.profile-actions {
+  flex-shrink: 0;
+}
+.profile-bio {
+  margin: 16px 2px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+.profile-empty {
+  margin-top: 22px;
+}
+
+/* --- profile editor (Settings → Account) --- */
+.profedit-uname {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.profedit-at {
+  position: absolute;
+  left: 12px;
+  color: var(--muted);
+  font-size: 14px;
+  pointer-events: none;
+}
+.profedit-uname .search {
+  padding-left: 26px;
+  width: 100%;
+}
+.profedit-bio {
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+@media (min-width: 900px) {
+  /* the compact header avatar is only needed on mobile; desktop uses the rail */
+  .top-actions .acct-root {
+    display: none;
+  }
 }

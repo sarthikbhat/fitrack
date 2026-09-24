@@ -3,9 +3,10 @@
 // Thin auth layer over supabase-js. Everything degrades gracefully when Supabase
 // is unconfigured: the wrappers no-op and useAuth() reports status 'unconfigured'
 // so the UI can hide/disable the account controls without ever throwing.
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
+import { ensureProfile } from "@/lib/profile";
 import { useStore } from "@/lib/store";
 
 export type AuthStatus = "signed-in" | "signed-out" | "unconfigured";
@@ -43,6 +44,9 @@ export function useAuth(): AuthState {
   const configured = isSupabaseConfigured();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(configured);
+  // Track which user id we've already provisioned a profile row for, so
+  // ensureProfile fires exactly once per sign-in (never on every auth event).
+  const ensuredFor = useRef<string | null>(null);
 
   useEffect(() => {
     const sb = getSupabase();
@@ -52,18 +56,28 @@ export function useAuth(): AuthState {
     if (!sb) return;
     let active = true;
 
+    // Provision a profiles row once per signed-in user (idempotent + guarded).
+    const provision = (u: User | null) => {
+      if (!u || ensuredFor.current === u.id) return;
+      ensuredFor.current = u.id;
+      void ensureProfile(u);
+    };
+
     sb.auth.getSession().then(({ data }) => {
       if (!active) return;
       const u = data.session?.user ?? null;
       setUser(u);
       setUserId(u ? u.id : "local");
       setLoading(false);
+      provision(u);
     });
 
     const { data: sub } = sb.auth.onAuthStateChange((_event, session) => {
       const u = session?.user ?? null;
       setUser(u);
       setUserId(u ? u.id : "local");
+      if (!u) ensuredFor.current = null; // reset on sign-out
+      provision(u);
     });
 
     return () => {

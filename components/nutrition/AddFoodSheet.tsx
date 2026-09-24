@@ -259,7 +259,6 @@ export function AddFoodSheet({
             <button key={f.id} className="foodrow" onClick={() => choose(f)}>
               <div className="foodrow-main">
                 <span className="foodrow-name">{f.name}</span>
-                <span className="foodrow-tag off">OFF</span>
               </div>
               <span className="foodrow-kcal cond">{f.kcal} kcal · {f.p}P /100{f.base}</span>
             </button>

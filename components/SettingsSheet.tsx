@@ -8,6 +8,7 @@ import { Seg, Toggle } from "@/components/Controls";
 import { useStore } from "@/lib/store";
 import { todayISO } from "@/lib/dates";
 import { useAuth, signInWithGoogle, signOut } from "@/lib/auth";
+import { ProfileEditor } from "@/components/ProfileEditor";
 import { useSyncStatus } from "@/lib/sync/status";
 import { relativeTime } from "@/lib/sync/relativeTime";
 import { syncOnce } from "@/lib/sync/run";
@@ -306,6 +307,10 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           >
             Sign out
           </button>
+
+          <div className="srule" />
+          <label className="flbl">Edit profile</label>
+          <ProfileEditor />
         </>
       )}
 

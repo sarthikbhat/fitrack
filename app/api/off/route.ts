@@ -6,15 +6,14 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams.get("q")?.trim();
   if (!q) return NextResponse.json({ products: [] });
 
+  // Use the modern Search-a-licious service — the legacy cgi/search.pl and the
+  // v2 search endpoint frequently return "Page temporarily unavailable".
   const params = new URLSearchParams({
-    search_terms: q,
-    search_simple: "1",
-    action: "process",
-    json: "1",
-    page_size: "20",
-    fields: "code,product_name,brands,nutriments,serving_size",
+    q,
+    page_size: "25",
+    fields: "code,product_name,brands,nutriments",
   });
-  const url = "https://world.openfoodfacts.org/cgi/search.pl?" + params.toString();
+  const url = "https://search.openfoodfacts.org/search?" + params.toString();
 
   try {
     const r = await fetch(url, {

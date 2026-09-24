@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { Icon } from "@/data/icons";
 import { NAV } from "@/lib/nav";
 import { useSettings } from "@/components/SettingsProvider";
+import { AccountControl } from "@/components/AccountControl";
 
 // Desktop-only left rail. Hidden < 900px via CSS (.sidebar); the mobile BottomNav
 // covers the same routes. Purely CSS-toggled, so it renders on server + client alike.
@@ -31,10 +32,13 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
-      <button className="snav-item snav-foot" onClick={openSettings}>
-        <Icon name="gear" />
-        <span>Settings</span>
-      </button>
+      <div className="snav-foot">
+        <button className="snav-item" onClick={openSettings}>
+          <Icon name="gear" />
+          <span>Settings</span>
+        </button>
+        <AccountControl variant="sidebar" />
+      </div>
     </aside>
   );
 }
