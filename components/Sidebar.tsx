@@ -33,6 +33,14 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="snav-foot">
+        <Link
+          href="/people"
+          className={`snav-item${path === "/people" ? " active" : ""}`}
+          aria-current={path === "/people" ? "page" : undefined}
+        >
+          <Icon name="people" />
+          <span>Find people</span>
+        </Link>
         <button className="snav-item" onClick={openSettings}>
           <Icon name="gear" />
           <span>Settings</span>

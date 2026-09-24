@@ -3,8 +3,9 @@
 // for signed-in and signed-out visitors alike. 404s when the username is unknown.
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/Avatar";
-import { ProfileActions } from "@/components/ProfileActions";
+import { ProfileFollow } from "@/components/ProfileFollow";
 import { getProfileByUsername } from "@/lib/profile";
+import { getFollowCounts } from "@/lib/social";
 import { getServerSupabase } from "@/lib/supabaseServer";
 
 function joinedLabel(created_at: string | null): string | null {
@@ -20,8 +21,11 @@ export default async function ProfilePage({
   params: Promise<{ username: string }>;
 }) {
   const { username } = await params;
-  const profile = await getProfileByUsername(username, getServerSupabase());
+  const server = getServerSupabase();
+  const profile = await getProfileByUsername(username, server);
   if (!profile) notFound();
+
+  const counts = await getFollowCounts(profile.id, server);
 
   const displayName = profile.display_name || profile.username || "Athlete";
   const joined = joinedLabel(profile.created_at);
@@ -35,9 +39,11 @@ export default async function ProfilePage({
           {profile.username && <div className="profile-handle">@{profile.username}</div>}
           {joined && <div className="profile-joined">Joined {joined}</div>}
         </div>
-        <div className="profile-actions">
-          <ProfileActions profileId={profile.id} />
-        </div>
+        <ProfileFollow
+          profileId={profile.id}
+          followers={counts.followers}
+          following={counts.following}
+        />
       </section>
 
       {profile.bio && <p className="profile-bio">{profile.bio}</p>}

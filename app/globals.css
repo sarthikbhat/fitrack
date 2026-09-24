@@ -3518,6 +3518,113 @@ main .libgrid {
   margin-top: 22px;
 }
 
+/* --- follow: profile hero social block (counts + action) --- */
+.profile-social {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+}
+.follow-counts {
+  display: flex;
+  gap: 16px;
+}
+.follow-count {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.follow-count b {
+  color: var(--text);
+  font-weight: 700;
+  font-family: var(--font-geist-mono);
+}
+/* Follow / Following toggle. "Follow" reuses .btn.primary (accent). "Following"
+   is a quiet outlined state that turns danger-tinted on hover (reads "Unfollow"). */
+.follow-btn {
+  min-width: 96px;
+}
+.follow-btn.following {
+  background: var(--panel2);
+  color: var(--muted);
+  border-color: var(--line2);
+}
+.follow-btn.following:hover {
+  filter: none;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+/* --- find people (search + follow) --- */
+.people-page {
+  max-width: 640px;
+}
+.people-head {
+  margin: 8px 2px 16px;
+}
+.people-head .page-title {
+  font-family: var(--font-geist-sans);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text);
+}
+.people-sub {
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.people-search {
+  margin-bottom: 8px;
+}
+.people-note {
+  font-size: 12px;
+  color: var(--dim);
+  margin: 4px 2px 12px;
+}
+.people-results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+.people-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+.people-ident {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+  color: inherit;
+  text-decoration: none;
+}
+.people-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.people-name {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.people-handle {
+  font-size: 12px;
+  color: var(--muted);
+}
+.people-row .follow-btn {
+  flex-shrink: 0;
+}
+
 /* --- profile editor (Settings → Account) --- */
 .profedit-uname {
   position: relative;

@@ -91,6 +91,14 @@ export function AccountControl({ variant }: { variant: "sidebar" | "header" }) {
           Set up profile
         </button>
       )}
+      <Link
+        href="/people"
+        className="acct-menu-item"
+        role="menuitem"
+        onClick={() => setOpen(false)}
+      >
+        Find people
+      </Link>
       <button
         className="acct-menu-item"
         role="menuitem"

@@ -88,11 +88,11 @@ export default function DashboardPage() {
       <div className="dash">
         {/* --- Today's workout --- */}
         <div className="dashcard">
-          <div className="section-h">
-            <h2>Today&apos;s workout</h2>
-            <span className="sub">{plan ? (started ? "in progress" : "ready") : "rest day"}</span>
-          </div>
           <section className="panel home-card">
+            <div className="section-h" style={{ marginTop: 0 }}>
+              <h2>Today&apos;s workout</h2>
+              <span className="sub">{plan ? (started ? "in progress" : "ready") : "rest day"}</span>
+            </div>
             {plan ? (
               <>
                 <div className="home-row">
@@ -132,11 +132,11 @@ export default function DashboardPage() {
 
         {/* --- Nutrition today --- */}
         <div className="dashcard">
-          <div className="section-h">
-            <h2>Nutrition</h2>
-            <span className="sub">today</span>
-          </div>
           <section className="panel home-card">
+            <div className="section-h" style={{ marginTop: 0 }}>
+              <h2>Nutrition</h2>
+              <span className="sub">today</span>
+            </div>
             <div className="rollup" style={{ padding: 0, margin: 0 }}>
               <Ring pct={kpct} />
               <div className="rollup-macros">
@@ -157,15 +157,15 @@ export default function DashboardPage() {
 
         {/* --- Bodyweight --- */}
         <div className="dashcard">
-          <div className="section-h">
-            <h2>Bodyweight</h2>
-            {strk > 0 && (
-              <span className="sub">
-                <Icon name="flame" /> {strk}-day streak
-              </span>
-            )}
-          </div>
           <section className="panel home-card">
+            <div className="section-h" style={{ marginTop: 0 }}>
+              <h2>Bodyweight</h2>
+              {strk > 0 && (
+                <span className="sub">
+                  <Icon name="flame" /> {strk}-day streak
+                </span>
+              )}
+            </div>
             <div className="home-row">
               <div className="home-bw cond">
                 {fmtMass(body.bw, unit)}
@@ -189,11 +189,11 @@ export default function DashboardPage() {
 
         {/* --- This week --- */}
         <div className="dashcard">
-          <div className="section-h">
-            <h2>This week</h2>
-            <span className="sub">since Monday</span>
-          </div>
           <section className="panel home-card">
+            <div className="section-h" style={{ marginTop: 0 }}>
+              <h2>This week</h2>
+              <span className="sub">since Monday</span>
+            </div>
             <div className="stat">
               <div className="macro">
                 <b className="cond">{weekSessions.length}</b>
@@ -212,15 +212,15 @@ export default function DashboardPage() {
 
         {/* --- Recent activity --- */}
         <div className="dashcard wide">
-          <div className="section-h">
-            <h2>Recent activity</h2>
-            {recent.length > 0 && (
-              <Link href="/progress" className="sub" style={{ color: "var(--accent)" }}>
-                View all
-              </Link>
-            )}
-          </div>
           <section className="panel" style={{ padding: "6px 16px" }}>
+            <div className="section-h" style={{ marginTop: 4 }}>
+              <h2>Recent activity</h2>
+              {recent.length > 0 && (
+                <Link href="/progress" className="sub" style={{ color: "var(--accent)" }}>
+                  View all
+                </Link>
+              )}
+            </div>
             {recent.length ? (
               recent.map((h) => (
                 <div className="histrow" key={h.id}>
