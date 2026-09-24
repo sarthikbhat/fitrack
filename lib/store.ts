@@ -25,6 +25,7 @@ import { calcTargets } from "@/lib/targets";
 import { CURRENT_VERSION, defaultProfile, emptyState, migrate } from "@/lib/migrate";
 import { parseImport } from "@/lib/validate";
 import { idbStorage } from "@/lib/db";
+import { getSyncMeta, setLastSyncedAt, type SyncMeta } from "@/lib/sync/changes";
 import {
   logFor,
   sessionFromDay,
@@ -113,6 +114,9 @@ export type OnboardingData = {
 export type Store = State & {
   hydrated: boolean;
   setHydrated: () => void;
+  // Auth: flip the id local data is tagged with. Never persisted as an action
+  // (excluded from partialize); userId itself stays part of the persisted State.
+  setUserId: (id: string) => void;
   reset: () => void;
   setBw: (kg: number) => void;
   setGoal: (kg: number) => void;
@@ -180,6 +184,10 @@ export type Store = State & {
   resetAll: () => void;
   // Active target: goals normalised to {kcal,p,c,f} (legacy curTargets, 1782).
   curTargets: () => { kcal: number; p: number; c: number; f: number };
+  // ---- sync (foundation only; network push/pull lands in the next plan) ----
+  // Expose the persist-diff SyncMeta + last-synced stamp to the future engine.
+  getSyncMeta: () => SyncMeta;
+  setLastSyncedAt: (t: number) => void;
 };
 
 export const useStore = create<Store>()(
@@ -188,6 +196,7 @@ export const useStore = create<Store>()(
       ...emptyState(),
       hydrated: false,
       setHydrated: () => set({ hydrated: true }),
+      setUserId: (id) => set({ userId: id }),
       reset: () => set({ ...emptyState() }),
       setBw: (kg) =>
         set((s) => {
@@ -592,6 +601,9 @@ export const useStore = create<Store>()(
         set({ ...next }); // shallow-merge: replaces data fields, keeps actions + hydrated.
       },
       resetAll: () => set({ ...emptyState() }),
+      // ---- sync foundation ----
+      getSyncMeta: () => getSyncMeta(),
+      setLastSyncedAt: (t) => setLastSyncedAt(t),
     }),
     {
       name: "fitrack",
@@ -604,6 +616,7 @@ export const useStore = create<Store>()(
         const {
           hydrated: _h,
           setHydrated: _sh,
+          setUserId: _sui,
           reset: _r,
           setBw: _sb,
           setGoal: _sg,
@@ -662,6 +675,8 @@ export const useStore = create<Store>()(
           exportState: _es,
           importState: _is,
           resetAll: _ra,
+          getSyncMeta: _gsm,
+          setLastSyncedAt: _slsa,
           ...data
         } = s;
         return data as State;

@@ -2,11 +2,15 @@
 
 // Settings sheet — ports legacy renderSheet('settings') (legacy:2385-2420) plus the
 // export/import/resetAll data handlers (legacy:2328-2344, 2216). Reuses <Sheet>.
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Sheet } from "@/components/Sheet";
 import { Seg, Toggle } from "@/components/Controls";
 import { useStore } from "@/lib/store";
 import { todayISO } from "@/lib/dates";
+import { useAuth, signInWithGoogle, signOut } from "@/lib/auth";
+import { useSyncStatus } from "@/lib/sync/status";
+import { relativeTime } from "@/lib/sync/relativeTime";
+import { syncOnce } from "@/lib/sync/run";
 
 const ACCENTS = [
   { hex: "#10b981", name: "Emerald" },
@@ -46,8 +50,20 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const importState = useStore((s) => s.importState);
   const resetAll = useStore((s) => s.resetAll);
 
+  const { email, status, loading } = useAuth();
+  const sync = useSyncStatus();
+
   const fileRef = useRef<HTMLInputElement>(null);
   const [err, setErr] = useState<string | null>(null);
+
+  // Tick the clock so the "· 2m ago" suffix stays fresh while the sheet is open.
+  // Lazy init keeps Date.now() out of render (impure-in-render); the interval is
+  // cleaned up on unmount.
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
 
   const mass = profile?.units.mass ?? "kg";
   const theme = profile?.theme ?? "dark";
@@ -83,6 +99,27 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
     rd.onerror = () => setErr("Couldn't read that file.");
     rd.readAsText(file);
   };
+
+  // Live sync chip: map the engine status → label + tone. signed-out/unconfigured
+  // render no chip (the account controls already convey that state).
+  const syncChip = (() => {
+    switch (sync.status) {
+      case "syncing":
+        return { label: "Syncing…", color: "var(--muted)", title: undefined as string | undefined };
+      case "idle": {
+        const rel = relativeTime(sync.lastSyncedAt, now);
+        return { label: rel ? `Synced · ${rel}` : "Synced", color: "var(--accent)", title: undefined };
+      }
+      case "offline":
+        return { label: "Offline", color: "var(--muted)", title: undefined };
+      case "error":
+        return { label: "Sync error", color: "var(--danger)", title: sync.lastError ?? undefined };
+      default:
+        return null;
+    }
+  })();
+  const syncDisabled =
+    sync.status === "syncing" || sync.status === "signed-out" || sync.status === "unconfigured";
 
   const onErase = () => {
     if (window.confirm("Erase ALL Fitrack data on this device? This cannot be undone.")) {
@@ -216,6 +253,61 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           ]}
         />
       </div>
+
+      <div className="srule" />
+
+      <label className="flbl">Account</label>
+      {status === "unconfigured" && (
+        <p className="shint" style={{ margin: "4px 0 0" }}>
+          Cloud sync not configured yet.
+        </p>
+      )}
+      {status === "signed-out" && (
+        <>
+          <button
+            className="btn"
+            style={{ width: "100%", marginTop: 4 }}
+            disabled={loading}
+            onClick={() => signInWithGoogle()}
+          >
+            Sign in with Google
+          </button>
+          <p className="shint">Sync your data across devices.</p>
+        </>
+      )}
+      {status === "signed-in" && (
+        <>
+          <div className="srow" style={{ marginTop: 4 }}>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {email ?? "Signed in"}
+            </span>
+            {syncChip && (
+              <span
+                className="chip"
+                title={syncChip.title}
+                style={{ color: syncChip.color, borderColor: syncChip.color }}
+              >
+                {syncChip.label}
+              </span>
+            )}
+          </div>
+          <button
+            className="btn"
+            style={{ width: "100%", marginTop: 8 }}
+            disabled={syncDisabled}
+            onClick={() => syncOnce()}
+          >
+            {sync.status === "syncing" ? "Syncing…" : "Sync now"}
+          </button>
+          <button
+            className="btn ghost"
+            style={{ width: "100%", marginTop: 8 }}
+            onClick={() => signOut()}
+          >
+            Sign out
+          </button>
+        </>
+      )}
 
       <div className="srule" />
 

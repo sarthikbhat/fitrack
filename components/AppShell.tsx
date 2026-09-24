@@ -10,6 +10,7 @@ import { SwitchProvider } from "@/components/SwitchProvider";
 import { SettingsProvider, useSettings } from "@/components/SettingsProvider";
 import { RestBar } from "@/components/RestBar";
 import { Onboarding } from "@/components/Onboarding";
+import { SyncManager } from "@/components/SyncManager";
 import { Icon } from "@/data/icons";
 import { useStore } from "@/lib/store";
 
@@ -31,6 +32,7 @@ function Shell({ children }: { children: ReactNode }) {
       <PickerProvider>
         <SwitchProvider>
           <SettingsProvider>
+            <SyncManager />
             <div className="app">
               <Sidebar />
               <div className="wrap">
