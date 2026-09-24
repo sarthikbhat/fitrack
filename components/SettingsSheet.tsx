@@ -10,15 +10,16 @@ import { useStore } from "@/lib/store";
 import { todayISO } from "@/lib/dates";
 import { fmtMass, massFromDisplay, massLabel, type MassUnit } from "@/lib/units";
 import { useAuth, signInWithGoogle, signOut } from "@/lib/auth";
+import { deleteMyAccount } from "@/lib/account";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { useSyncStatus } from "@/lib/sync/status";
 import { relativeTime } from "@/lib/sync/relativeTime";
 import { syncOnce } from "@/lib/sync/run";
 
 const ACCENTS = [
+  { hex: "#3b82f6", name: "Blue" },
   { hex: "#10b981", name: "Emerald" },
   { hex: "#6366f1", name: "Indigo" },
-  { hex: "#3b82f6", name: "Blue" },
   { hex: "#f59e0b", name: "Amber" },
   { hex: "#f43f5e", name: "Rose" },
   { hex: "#8b5cf6", name: "Violet" },
@@ -112,6 +113,8 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
 
   const fileRef = useRef<HTMLInputElement>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [delErr, setDelErr] = useState<string | null>(null);
 
   // Tick the clock so the "· 2m ago" suffix stays fresh while the sheet is open.
   // Lazy init keeps Date.now() out of render (impure-in-render); the interval is
@@ -209,6 +212,23 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       confirmLabel: "Sign out",
     });
     if (ok) void signOut();
+  };
+
+  const onDeleteAccount = async () => {
+    const ok = await confirm({
+      title: "Delete account?",
+      message:
+        "This permanently deletes your account and all cloud data - profile, synced workouts and nutrition, follows, and posts. This cannot be undone.",
+      confirmLabel: "Delete account",
+      danger: true,
+    });
+    if (!ok) return;
+    setDelErr(null);
+    setDeleting(true);
+    const res = await deleteMyAccount();
+    setDeleting(false);
+    if (res.ok) onClose();
+    else setDelErr(res.error);
   };
 
   return (
@@ -435,6 +455,23 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
           <div className="srule" />
           <label className="flbl">Edit profile</label>
           <ProfileEditor />
+
+          <div className="srule" />
+          <label className="flbl" style={{ color: "var(--danger)" }}>Danger zone</label>
+          <button
+            className="btn ghost"
+            style={{ width: "100%", marginTop: 4, color: "var(--danger)", borderColor: "var(--line2)" }}
+            disabled={deleting}
+            onClick={onDeleteAccount}
+          >
+            {deleting ? "Deleting…" : "Delete account"}
+          </button>
+          <p className="shint" style={{ marginTop: 8 }}>
+            Permanently removes your account and all cloud data. Local data on this device is cleared too.
+          </p>
+          {delErr && (
+            <p className="shint" style={{ color: "var(--danger)", marginTop: 8 }}>{delErr}</p>
+          )}
         </>
       )}
 

@@ -211,7 +211,7 @@ export function defaultProfile(): Profile {
     activity: 3,
     units: { mass: "kg", len: "cm", energy: "kcal" },
     theme: "dark",
-    accent: "#2BE38B",
+    accent: "#3b82f6",
     startDay: 1,
   };
 }

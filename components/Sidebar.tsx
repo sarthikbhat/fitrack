@@ -58,6 +58,11 @@ export function Sidebar() {
           <span>Settings</span>
         </button>
         <AccountControl variant="sidebar" />
+        <div className="snav-legal">
+          <Link href="/legal/privacy">Privacy</Link>
+          <span aria-hidden>·</span>
+          <Link href="/legal/terms">Terms</Link>
+        </div>
       </div>
     </aside>
   );

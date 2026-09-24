@@ -77,7 +77,10 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Gate (so a brand-new visitor sees the shared plan, not the onboarding wizard).
   // ThemeSync + ConfirmProvider stay so the page respects theme and the clone flow
   // can use the confirm dialog; both no-op gracefully before the store hydrates.
-  if (pathname?.startsWith("/p/")) {
+  // Legal pages (/legal/*) are standalone too: they ship their own header/footer
+  // and must render for logged-out, data-less visitors (e.g. from the OAuth consent
+  // screen). Bypass the HydrationGate and onboarding Gate like /p/*.
+  if (pathname?.startsWith("/p/") || pathname?.startsWith("/legal")) {
     return (
       <>
         <ThemeSync />
