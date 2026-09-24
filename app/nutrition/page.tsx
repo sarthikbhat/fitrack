@@ -15,9 +15,17 @@ import { Ring } from "@/components/exercise/Ring";
 import { Icon } from "@/data/icons";
 import { AddFoodSheet } from "@/components/nutrition/AddFoodSheet";
 
-// The add-food sheet targets either a logged meal (day) or a plan meal (editor).
+// The add-food sheet targets a meal without writing to the store up-front: the
+// LoggedMeal is only created on the first actual add (see onAdd), so opening the
+// sheet never leaves an empty meal / stray delete icon behind.
+//  - log:         an existing logged meal — append items to it
+//  - newFromPlan: a plan slot with no logged meal yet — create (linked) on first add
+//  - newCustom:   a brand-new custom meal — create on first add
+//  - plan:        the plan editor — write straight into the recurring plan meal
 type SheetTarget =
   | { kind: "log"; mealId: string; title: string }
+  | { kind: "newFromPlan"; planMealId: string; name: string; title: string }
+  | { kind: "newCustom"; name: string; title: string }
   | { kind: "plan"; mealId: string; title: string };
 
 export default function NutritionPage() {
@@ -32,6 +40,7 @@ export default function NutritionPage() {
   const renameLoggedMeal = useStore((s) => s.renameLoggedMeal);
   const removeLoggedMeal = useStore((s) => s.removeLoggedMeal);
   const removeLoggedItem = useStore((s) => s.removeLoggedItem);
+  const pruneEmptyMeals = useStore((s) => s.pruneEmptyMeals);
   const addPlanItem = useStore((s) => s.addPlanItem);
 
   const [date, setDate] = useState(() => todayISO());
@@ -53,8 +62,26 @@ export default function NutritionPage() {
 
   const onAdd = (food: Food, qty: number, unit: string) => {
     if (!target) return;
-    if (target.kind === "log") logToMeal(date, target.mealId, { food, qty, unit });
-    else addPlanItem(target.mealId, { food, qty, unit });
+    const item = { food, qty, unit };
+    if (target.kind === "plan") {
+      addPlanItem(target.mealId, item);
+      return;
+    }
+    if (target.kind === "log") {
+      logToMeal(date, target.mealId, item);
+      return;
+    }
+    // Deferred targets: create the LoggedMeal now (first food), then append into it.
+    // Re-point the target at the freshly-created meal so further adds land in the same one.
+    const id =
+      target.kind === "newFromPlan" ? logDifferent(date, target.planMealId) : addCustomMeal(date, target.name);
+    logToMeal(date, id, item);
+    setTarget({ kind: "log", mealId: id, title: target.title });
+  };
+
+  const closeSheet = () => {
+    pruneEmptyMeals(date); // safety net: drop any zero-item meal before leaving the day
+    setTarget(null);
   };
 
   return (
@@ -106,10 +133,9 @@ export default function NutritionPage() {
                   key={pm.id}
                   meal={pm}
                   onAteThis={() => confirmPlanMeal(date, pm.id)}
-                  onLogFood={() => {
-                    const id = logDifferent(date, pm.id);
-                    setTarget({ kind: "log", mealId: id, title: `Log ${pm.name}` });
-                  }}
+                  onLogFood={() =>
+                    setTarget({ kind: "newFromPlan", planMealId: pm.id, name: pm.name, title: `Log ${pm.name}` })
+                  }
                 />
               );
             })}
@@ -129,10 +155,7 @@ export default function NutritionPage() {
             <button
               className="btn ghost addex"
               style={{ width: "100%", marginTop: 8 }}
-              onClick={() => {
-                const id = addCustomMeal(date, mealNameForTime());
-                setTarget({ kind: "log", mealId: id, title: "Add food" });
-              }}
+              onClick={() => setTarget({ kind: "newCustom", name: mealNameForTime(), title: "Add food" })}
             >
               <Icon name="plus" /> Add meal
             </button>
@@ -140,7 +163,7 @@ export default function NutritionPage() {
         </div>
       )}
 
-      {target && <AddFoodSheet title={target.title} onAdd={onAdd} onClose={() => setTarget(null)} />}
+      {target && <AddFoodSheet title={target.title} onAdd={onAdd} onClose={closeSheet} />}
     </main>
   );
 }

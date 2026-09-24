@@ -100,8 +100,8 @@ export function AddFoodSheet({
 
   const choose = (f: Food) => {
     setPicked(f);
-    setQty(1);
-    setUnit(f.servings[0]?.label ?? f.base); // default to a named serving when there is one
+    setQty(1); // always start at one portion, never blank
+    setUnit(f.base); // default to the base unit (g/ml); named servings remain selectable
   };
 
   const createAndContinue = () => {
@@ -181,7 +181,23 @@ export function AddFoodSheet({
     const m = macroFor(picked, qty, unit);
     const pk = m.p * 4, ck = m.c * 4, fk = m.f * 9;
     const tot = pk + ck + fk || 1;
-    const units = [picked.base, ...picked.servings.map((s) => s.label)];
+    // Unit list = base unit (g/ml) + only genuine, distinct serving labels.
+    // Guard against serving labels that are empty, duplicate the base, or repeat
+    // the food's own name (some seed foods, e.g. Apple → serving "apple").
+    const base = picked.base;
+    const name = picked.name.trim().toLowerCase();
+    const units = [
+      base,
+      ...picked.servings
+        .map((s) => s.label.trim())
+        .filter(
+          (label, i, arr) =>
+            label &&
+            label.toLowerCase() !== base.toLowerCase() &&
+            label.toLowerCase() !== name &&
+            arr.indexOf(label) === i,
+        ),
+    ];
 
     return (
       <Sheet title={picked.name} hint={picked.brand} onClose={onClose}>

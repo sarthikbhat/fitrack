@@ -39,6 +39,7 @@ import {
   activeDays,
 } from "@/lib/day";
 import { todayISO } from "@/lib/dates";
+import { pruneEmptyMeals } from "@/lib/meals";
 
 // Seed foods are a static import, merged in at read time by allFoods() — never
 // copied into the persisted store, so the saved blob stays small.
@@ -159,6 +160,9 @@ export type Store = State & {
   renameLoggedMeal: (date: string, id: string, name: string) => void;
   removeLoggedMeal: (date: string, id: string) => void;
   removeLoggedItem: (date: string, mealId: string, entryId: string) => void;
+  // Safety net: drop any zero-item logged meals for a day (called when the add sheet closes)
+  // so a deferred meal that never got a food never lingers as an empty card / stray delete icon.
+  pruneEmptyMeals: (date: string) => void;
   dayTotals: (date: string) => Macros;
   // Food library.
   addCustomFood: (food: Omit<Food, "id" | "updatedAt" | "source">) => string;
@@ -495,6 +499,14 @@ export const useStore = create<Store>()(
             },
           };
         }),
+      pruneEmptyMeals: (date) =>
+        set((s) => {
+          const day = s.diary[date];
+          if (!day) return {};
+          const pruned = pruneEmptyMeals(day);
+          if (pruned === day) return {}; // nothing to prune
+          return { diary: { ...s.diary, [date]: pruned } };
+        }),
       dayTotals: (date) => calcDayTotals(get().diary[date]?.meals ?? []),
       // ---- food library ----
       addCustomFood: (food) => {
@@ -654,6 +666,7 @@ export const useStore = create<Store>()(
           renameLoggedMeal: _rnlm,
           removeLoggedMeal: _rlm,
           removeLoggedItem: _rli,
+          pruneEmptyMeals: _pem,
           dayTotals: _dt,
           addCustomFood: _acf,
           allFoods: _af,

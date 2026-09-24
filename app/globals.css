@@ -123,6 +123,33 @@ a {
   outline-offset: 2px;
 }
 
+/* ---------- themed scrollbar (app-wide default) ----------
+   Replaces the fat/white OS scrollbar in every scroll container (add-food list,
+   modals, page, etc.). Intentionally-hidden horizontal scrollers (.dayscroll,
+   .filters, .filterbar, .heat) keep their own scrollbar-width:none overrides. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line2) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line2);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--dim);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
 .cond {
   font-family: var(--font-geist-sans);
 }
@@ -207,6 +234,12 @@ header.top {
   border: 1px solid var(--line2);
   color: var(--muted);
   background: rgba(255, 255, 255, 0.02);
+}
+/* A chip that trails a title (e.g. day name + "Today", program name + "Active")
+   needs breathing room so it doesn't butt against the text — the inline space
+   collapses against the inline-flex chip. */
+.nm .chip {
+  margin-left: 8px;
 }
 /* Clickable chip (tag that filters the catalog). Reuses .chip visuals; adds affordance. */
 .chip-tap {
@@ -523,12 +556,26 @@ header.top {
   font-size: 17px;
   color: var(--muted);
 }
+/* Makes it obvious the stepper below is the "log my weight" input. */
+.bwlog-lbl {
+  margin-top: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.bwlog-hint {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--dim);
+}
 .bwedit {
   display: flex;
   gap: 8px;
   align-items: center;
   justify-content: center;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 .bwedit .cell {
   max-width: 110px;
@@ -2684,19 +2731,27 @@ nav.tabs {
   flex-direction: column;
   max-height: 52vh;
   overflow-y: auto;
+  /* Breathing room: keep rows off the themed scrollbar, and a little top/bottom air. */
+  padding: 4px 6px 6px 2px;
+  margin-top: 2px;
 }
 .foodrow {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  padding: 11px 4px;
+  gap: 16px;
+  padding: 14px 6px;
   border: none;
   background: transparent;
   border-top: 1px solid var(--line);
   color: var(--text);
   cursor: pointer;
   text-align: left;
+  border-radius: 8px;
+}
+/* First row reads as the list's start, not a bordered cell. */
+.foodrow:first-child {
+  border-top: none;
 }
 .foodrow:hover {
   background: var(--panel2);
@@ -2710,6 +2765,7 @@ nav.tabs {
 .foodrow-name {
   font-size: 14px;
   font-weight: 600;
+  line-height: 1.35;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

@@ -124,6 +124,8 @@ export default function ProgressPage() {
           {fmtMass(bwKg, unit)}
           <small> {u}</small>
         </div>
+        <div className="bwlog-lbl">Log today&apos;s weight</div>
+        <div className="bwlog-hint">Adjust below — it records today&apos;s entry and builds your trend.</div>
         <div className="bwedit">
           <button className="btn sm" onClick={() => adjustBw(-0.1)} aria-label="lower weight">–</button>
           <input
