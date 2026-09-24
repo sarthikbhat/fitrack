@@ -208,6 +208,18 @@ header.top {
   color: var(--muted);
   background: rgba(255, 255, 255, 0.02);
 }
+/* Clickable chip (tag that filters the catalog). Reuses .chip visuals; adds affordance. */
+.chip-tap {
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.chip-tap:hover,
+.chip-tap:focus-visible {
+  color: var(--text);
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.05);
+}
 .btn {
   font-family: var(--font-geist-sans);
   font-weight: 600;

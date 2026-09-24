@@ -7,7 +7,8 @@
 // cursor-based "Load more". Tapping a card opens the how-to modal BY ID (openExerciseById),
 // which pulls the EDB detail record directly. The curated data/library.ts is untouched —
 // it still backs the add-to-program picker.
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   searchExercises,
   getBodyParts,
@@ -26,10 +27,40 @@ const PAGE = 24;
 const cap = (s: string): string => (s ? s[0].toUpperCase() + s.slice(1) : s);
 const pretty = (s: string): string => cap(s.replace(/_/g, " ").toLowerCase());
 
-function CatCard({ item, onOpen }: { item: EdbListItem; onOpen: () => void }) {
+function CatCard({
+  item,
+  onOpen,
+  onChip,
+}: {
+  item: EdbListItem;
+  onOpen: () => void;
+  onChip: (param: "bodyParts" | "equipments", value: string) => void;
+}) {
   const [broken, setBroken] = useState(false);
   const bp = item.bodyParts[0];
   const eq = item.equipments[0];
+  // Chips filter the catalog in place. They live inside the card <button>, so they are
+  // spans (not nested buttons) with stopPropagation to avoid also opening the modal.
+  const chip = (param: "bodyParts" | "equipments", value: string) => (
+    <span
+      className="chip chip-tap"
+      role="button"
+      tabIndex={0}
+      onClick={(ev) => {
+        ev.stopPropagation();
+        onChip(param, value);
+      }}
+      onKeyDown={(ev) => {
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+          ev.stopPropagation();
+          onChip(param, value);
+        }
+      }}
+    >
+      {pretty(value)}
+    </span>
+  );
   return (
     <button className="libcard" onClick={onOpen} aria-label={`How to do ${item.name}`}>
       <div className="catimg">
@@ -42,8 +73,8 @@ function CatCard({ item, onOpen }: { item: EdbListItem; onOpen: () => void }) {
       </div>
       <div className="libnm">{cap(item.name)}</div>
       <div className="catchips">
-        {bp && <span className="chip">{pretty(bp)}</span>}
-        {eq && <span className="chip">{pretty(eq)}</span>}
+        {bp && chip("bodyParts", bp)}
+        {eq && chip("equipments", eq)}
       </div>
     </button>
   );
@@ -78,15 +109,37 @@ function FilterSelect({
   );
 }
 
-export default function LibraryPage() {
+function LibraryContent() {
   const { openExerciseById } = useExerciseModal();
+  const params = useSearchParams();
 
-  const [rawQuery, setRawQuery] = useState("");
-  const [search, setSearch] = useState(""); // debounced
-  const [bodyPart, setBodyPart] = useState("");
-  const [equipment, setEquipment] = useState("");
-  const [exType, setExType] = useState("");
-  const [muscle, setMuscle] = useState("");
+  // Seed the filters from the URL query so a deep link (e.g. from a tapped tag in the
+  // detail modal) lands on a pre-filtered catalog. Values match the AscendAPI vocabulary
+  // (UPPERCASE), which is exactly what the dropdown <option> values use, so the matching
+  // filter dropdown also shows the active value.
+  const [rawQuery, setRawQuery] = useState(() => params.get("search") ?? "");
+  const [search, setSearch] = useState(() => params.get("search") ?? ""); // debounced
+  const [bodyPart, setBodyPart] = useState(() => params.get("bodyParts") ?? "");
+  const [equipment, setEquipment] = useState(() => params.get("equipments") ?? "");
+  const [exType, setExType] = useState(() => params.get("exerciseType") ?? "");
+  const [muscle, setMuscle] = useState(() => params.get("targetMuscles") ?? "");
+
+  // Re-seed when the query string changes via navigation while the page is already mounted
+  // (e.g. a modal chip on the Library route pushes /library?bodyParts=…). Lazy initial
+  // state only runs on first mount, so this adjust-during-render guard — keyed on the
+  // string form of the params — handles the same-route case without a set-state-in-effect
+  // cascade. User dropdown changes don't touch the URL, so they never trip it.
+  const spString = params.toString();
+  const [prevSp, setPrevSp] = useState(spString);
+  if (prevSp !== spString) {
+    setPrevSp(spString);
+    setRawQuery(params.get("search") ?? "");
+    setSearch(params.get("search") ?? "");
+    setBodyPart(params.get("bodyParts") ?? "");
+    setEquipment(params.get("equipments") ?? "");
+    setExType(params.get("exerciseType") ?? "");
+    setMuscle(params.get("targetMuscles") ?? "");
+  }
 
   const [bodyParts, setBodyParts] = useState<EdbRef[]>([]);
   const [equipments, setEquipments] = useState<EdbRef[]>([]);
@@ -245,7 +298,15 @@ export default function LibraryPage() {
         <>
           <div className="libgrid">
             {items.map((it) => (
-              <CatCard key={it.id} item={it} onOpen={() => openExerciseById(it.id, cap(it.name))} />
+              <CatCard
+                key={it.id}
+                item={it}
+                onOpen={() => openExerciseById(it.id, cap(it.name))}
+                onChip={(param, value) => {
+                  if (param === "bodyParts") setBodyPart(value);
+                  else setEquipment(value);
+                }}
+              />
             ))}
           </div>
           {hasNext && (
@@ -258,5 +319,15 @@ export default function LibraryPage() {
         <div className="empty">No exercises match your search.</div>
       )}
     </main>
+  );
+}
+
+// useSearchParams requires a Suspense boundary so the page can still be statically
+// prerendered; the content renders client-side once the query params are available.
+export default function LibraryPage() {
+  return (
+    <Suspense fallback={<main />}>
+      <LibraryContent />
+    </Suspense>
   );
 }

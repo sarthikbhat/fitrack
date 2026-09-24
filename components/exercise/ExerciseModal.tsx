@@ -7,6 +7,7 @@
 //   (free-exercise-db instructions, else ExerciseDB, else EDB overview, else a
 //   sensible fallback), and a YouTube search link.
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { PLAN } from "@/data/plan";
 import { LIBRARY } from "@/data/library";
 import { mc } from "@/data/muscles";
@@ -22,6 +23,11 @@ import { MuscleMap } from "@/components/exercise/MuscleMap";
 import { useExerciseModal } from "@/components/exercise/ExerciseModalProvider";
 
 const cap = (s: string): string => (s ? s[0].toUpperCase() + s.slice(1) : s);
+
+// Display-only prettifier for EDB's UPPERCASE API vocabulary (e.g. "TRICEPS BRACHII"
+// → "Triceps Brachii"). The exact API value is kept for the click→filter param.
+const titleCase = (s: string): string =>
+  s ? s.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()) : s;
 
 function muscleFor(name: string): string {
   let mus = "";
@@ -49,6 +55,15 @@ export function ExerciseModal({
   const uLbl = massLabel(unit);
   const sex = useStore((s) => (s.profile?.sex ?? "male") as "male" | "female");
   const { openExerciseById } = useExerciseModal();
+  const router = useRouter();
+
+  // Tapping a meta chip jumps to the Library filtered by that tag: close the modal, clear
+  // the scroll-lock, then deep-link with the AscendAPI param the Library reads on mount.
+  const filterBy = (param: "bodyParts" | "equipments" | "targetMuscles", value: string) => {
+    onClose();
+    document.body.classList.remove("locked");
+    router.push(`/library?${param}=${encodeURIComponent(value)}`);
+  };
 
   const [xdb, setXdb] = useState<XdbEntry | undefined>(() => peekXdb(name));
   const [edb, setEdb] = useState<EdbDetail | null>(null);
@@ -150,12 +165,17 @@ export function ExerciseModal({
   // renders only when non-empty; the muscle map is fed EDB's muscle vocabulary directly.
   const target = edb?.targetMuscles ?? [];
   const secondary = edb?.secondaryMuscles ?? [];
-  const detailChips = [
-    ...(edb?.equipments ?? []),
-    ...(edb?.bodyParts ?? []),
-    ...target,
-    ...secondary,
-  ].filter(Boolean);
+  // Each chip carries the Library filter param it maps to: equipment → equipments,
+  // body part → bodyParts, target & secondary muscle → targetMuscles.
+  const detailChips: { value: string; param: "bodyParts" | "equipments" | "targetMuscles" }[] = [
+    ...(edb?.equipments ?? []).map((v) => ({ value: v, param: "equipments" as const })),
+    ...(edb?.bodyParts ?? []).map((v) => ({ value: v, param: "bodyParts" as const })),
+    ...target.map((v) => ({ value: v, param: "targetMuscles" as const })),
+    ...secondary.map((v) => ({ value: v, param: "targetMuscles" as const })),
+  ].filter((c) => c.value);
+  // When EDB detail loaded (id-open, or name-open where matchEdb resolved), the EDB chips
+  // above are the authoritative tags — suppress the stale free-exercise-db metarow entirely.
+  const hasEdbDetail = detailChips.length > 0;
   const instructions = edb?.instructions ?? [];
   const tips = edb?.exerciseTips ?? [];
   const variations = edb?.variations ?? [];
@@ -238,7 +258,7 @@ export function ExerciseModal({
           </div>
         </div>
         <div className="content">
-          {meta.length > 0 && (
+          {!hasEdbDetail && meta.length > 0 && (
             <div className="metarow">
               {meta.map((m, i) => (
                 <span className="chip" key={i}>{m}</span>
@@ -289,7 +309,15 @@ export function ExerciseModal({
             <div className="detail-section">
               <div className="metarow">
                 {detailChips.map((c, i) => (
-                  <span className="chip" key={i}>{cap(c)}</span>
+                  <button
+                    type="button"
+                    className="chip chip-tap"
+                    key={i}
+                    onClick={() => filterBy(c.param, c.value)}
+                    aria-label={`Filter library by ${titleCase(c.value)}`}
+                  >
+                    {titleCase(c.value)}
+                  </button>
                 ))}
               </div>
             </div>
