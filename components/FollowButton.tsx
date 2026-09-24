@@ -36,13 +36,16 @@ export function FollowButton({
   // state updates run inside the async closure (never synchronously in the effect
   // body) to avoid cascading renders.
   useEffect(() => {
+    // A provided seed is authoritative for the initial state - trust it and never
+    // reset it (a transient signed-out render during auth resolution must not clear
+    // a seeded "following" value).
+    if (seeded.current) return;
     let active = true;
     void (async () => {
       if (status !== "signed-in" || isSelf) {
         if (active) setFollowing(false);
         return;
       }
-      if (seeded.current) return;
       const f = await isFollowing(targetId);
       if (active) setFollowing(f);
     })();
