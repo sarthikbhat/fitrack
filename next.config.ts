@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 import withSerwistInit from "@serwist/next";
 
+// Build cache-buster: bumping this forces Vercel to invalidate the Next build
+// cache (which was serving stale JS chunks). Increment when a clean rebuild is needed.
+const BUILD_CACHE_BUSTER = 2;
+void BUILD_CACHE_BUSTER;
+
 const nextConfig: NextConfig = {
   // Pin the workspace root to this repo (a stray lockfile sits above it).
   outputFileTracingRoot: process.cwd(),
