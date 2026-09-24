@@ -24,6 +24,7 @@ export default function ProgressPage() {
   const unit = useStore((s) => (s.profile?.units.mass ?? "kg") as MassUnit);
   const setBw = useStore((s) => s.setBw);
   const setGoal = useStore((s) => s.setGoal);
+  const setStartWeight = useStore((s) => s.setStartWeight);
   const setHeight = useStore((s) => s.setHeight);
   const deleteSession = useStore((s) => s.deleteSession);
   const confirm = useConfirm();
@@ -83,13 +84,15 @@ export default function ProgressPage() {
   // Uses the React "adjust state during render" pattern (a signature guard) rather than
   // effects, so store-driven changes reflect without cascading set-state-in-effect renders.
   const [bwStr, setBwStr] = useState(fmtMass(bwKg, unit));
+  const [startStr, setStartStr] = useState(fmtMass(startKg, unit));
   const [goalStr, setGoalStr] = useState(fmtMass(goalKg, unit));
   const [heightStr, setHeightStr] = useState(String(Math.round(heightCm)));
-  const sig = `${bwKg}|${goalKg}|${heightCm}|${unit}`;
+  const sig = `${bwKg}|${startKg}|${goalKg}|${heightCm}|${unit}`;
   const [prevSig, setPrevSig] = useState(sig);
   if (prevSig !== sig) {
     setPrevSig(sig);
     setBwStr(fmtMass(bwKg, unit));
+    setStartStr(fmtMass(startKg, unit));
     setGoalStr(fmtMass(goalKg, unit));
     setHeightStr(String(Math.round(heightCm)));
   }
@@ -98,6 +101,11 @@ export default function ProgressPage() {
     const n = parseFloat(v);
     if (isNaN(n)) return setBwStr(fmtMass(bwKg, unit));
     setBw(round2(massFromDisplay(n, unit)));
+  };
+  const commitStart = (v: string) => {
+    const n = parseFloat(v);
+    if (isNaN(n)) return setStartStr(fmtMass(startKg, unit));
+    setStartWeight(round2(massFromDisplay(n, unit)));
   };
   const commitGoal = (v: string) => {
     const n = parseFloat(v);
@@ -110,6 +118,7 @@ export default function ProgressPage() {
     setHeight(Math.round(n));
   };
   const adjustBw = (d: number) => setBw(round2(massFromDisplay(bw + d, unit)));
+  const adjustStart = (d: number) => setStartWeight(round2(massFromDisplay(start + d, unit)));
   const adjustGoal = (d: number) => setGoal(round2(massFromDisplay(goal + d, unit)));
   const adjustHeight = (d: number) => setHeight(Math.round(heightCm) + d);
 
@@ -150,6 +159,21 @@ export default function ProgressPage() {
         >
           <span>{leftTxt}</span>
           <span>{rightTxt}</span>
+        </div>
+        <div className="goalrow">
+          <span className="goallbl">START WEIGHT</span>
+          <button className="btn sm" onClick={() => adjustStart(-0.5)} aria-label="lower start weight">–</button>
+          <input
+            className="cell"
+            inputMode="decimal"
+            value={startStr}
+            onChange={(e) => setStartStr(e.target.value)}
+            onBlur={(e) => commitStart(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+            aria-label="start weight"
+          />
+          <button className="btn sm" onClick={() => adjustStart(0.5)} aria-label="raise start weight">+</button>
+          <span className="chip" style={{ marginLeft: "auto" }}>baseline</span>
         </div>
         <div className="goalrow">
           <span className="goallbl">GOAL</span>

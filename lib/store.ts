@@ -123,6 +123,7 @@ export type Store = State & {
   reset: () => void;
   setBw: (kg: number) => void;
   setGoal: (kg: number) => void;
+  setStartWeight: (kg: number) => void;
   setHeight: (cm: number) => void;
   deleteSession: (id: string) => void;
   setLoggedSet: (date: string, exName: string, i: number, field: "w" | "r", value: string, plannedSets: number) => void;
@@ -218,6 +219,8 @@ export const useStore = create<Store>()(
           return { body: { ...s.body, bw: kg, history } };
         }),
       setGoal: (kg) => set((s) => ({ body: { ...s.body, goalWeight: Math.min(300, Math.max(30, kg)) } })),
+      setStartWeight: (kg) =>
+        set((s) => ({ body: { ...s.body, startWeight: Math.min(300, Math.max(30, kg)) } })),
       setHeight: (cm) =>
         set((s) => ({
           profile: s.profile ? { ...s.profile, heightCm: Math.min(220, Math.max(120, cm)) } : s.profile,
@@ -649,6 +652,7 @@ export const useStore = create<Store>()(
           reset: _r,
           setBw: _sb,
           setGoal: _sg,
+          setStartWeight: _ssw,
           setHeight: _sht,
           deleteSession: _ds,
           setLoggedSet: _sls,

@@ -1,5 +1,7 @@
 // Inline SVG strings from legacy IC map. Render with <Icon name="train" />.
 export const IC: Record<string, string> = {
+  home:
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5"/></svg>',
   train:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 17.5 17.5M3 8l2-2M8 3l-2 2M21 16l-2 2M16 21l2-2"/><rect x="1.5" y="6.5" width="4" height="6" rx="1" transform="rotate(-45 3.5 9.5)"/><rect x="18.5" y="11.5" width="4" height="6" rx="1" transform="rotate(-45 20.5 14.5)"/></svg>',
   program:

@@ -8,6 +8,7 @@ import { useConfirm } from "@/components/ConfirmProvider";
 import { Seg, Toggle } from "@/components/Controls";
 import { useStore } from "@/lib/store";
 import { todayISO } from "@/lib/dates";
+import { fmtMass, massFromDisplay, massLabel, type MassUnit } from "@/lib/units";
 import { useAuth, signInWithGoogle, signOut } from "@/lib/auth";
 import { ProfileEditor } from "@/components/ProfileEditor";
 import { useSyncStatus } from "@/lib/sync/status";
@@ -35,9 +36,61 @@ function fmtRest(sec: number): string {
   return `${Math.floor(sec / 60)}:${`0${sec % 60}`.slice(-2)}`;
 }
 
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
+// Compact label + editable value row for the Body section. Resyncs its local text
+// when the stored value changes (unit switch, external edit) via the signature guard.
+function EditRow({
+  label,
+  value,
+  suffix,
+  onCommit,
+}: {
+  label: string;
+  value: string;
+  suffix: string;
+  onCommit: (raw: string) => void;
+}) {
+  const [str, setStr] = useState(value);
+  const [prev, setPrev] = useState(value);
+  if (prev !== value) {
+    setPrev(value);
+    setStr(value);
+  }
+  return (
+    <div className="srow">
+      <span>{label}</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <input
+          className="cell"
+          inputMode="decimal"
+          value={str}
+          onChange={(e) => setStr(e.target.value)}
+          onBlur={(e) => {
+            onCommit(e.target.value);
+            setStr(value);
+          }}
+          onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+          style={{ maxWidth: 88 }}
+          aria-label={label}
+        />
+        <span className="cond" style={{ fontSize: 12, color: "var(--dim)", minWidth: 18 }}>
+          {suffix}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const profile = useStore((s) => s.profile);
   const settings = useStore((s) => s.settings);
+  const bodyData = useStore((s) => s.body);
+  const heightCm = useStore((s) => s.profile?.heightCm ?? 170);
+  const setBw = useStore((s) => s.setBw);
+  const setGoal = useStore((s) => s.setGoal);
+  const setStartWeight = useStore((s) => s.setStartWeight);
+  const setHeight = useStore((s) => s.setHeight);
   const setUnitsMass = useStore((s) => s.setUnitsMass);
   const setTheme = useStore((s) => s.setTheme);
   const setRest = useStore((s) => s.setRest);
@@ -75,6 +128,17 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
   const activity = String(profile?.activity ?? 3);
   const accent = profile?.accent ?? ACCENTS[0].hex;
   const startDay = profile?.startDay ?? 1;
+  const massU = mass as MassUnit;
+
+  // Body editors. Mass fields convert display→kg; current weight logs today's entry.
+  const commitMass = (setter: (kg: number) => void) => (raw: string) => {
+    const n = parseFloat(raw);
+    if (!isNaN(n)) setter(round2(massFromDisplay(n, massU)));
+  };
+  const commitHeight = (raw: string) => {
+    const n = parseInt(raw, 10);
+    if (!isNaN(n)) setHeight(Math.round(n));
+  };
 
   const onExport = () => {
     const blob = new Blob([exportState()], { type: "application/json" });
@@ -240,6 +304,37 @@ export function SettingsSheet({ onClose }: { onClose: () => void }) {
       <p className="shint" style={{ margin: "2px 0 0" }}>
         Age &amp; activity power the nutrition target calculator.
       </p>
+
+      <div className="srule" />
+
+      <label className="flbl">Body</label>
+      <p className="shint" style={{ margin: "4px 0 8px" }}>
+        Stored on this device. Current weight logs today&apos;s entry.
+      </p>
+      <EditRow
+        label="Start weight"
+        value={fmtMass(bodyData.startWeight, massU)}
+        suffix={massLabel(massU)}
+        onCommit={commitMass(setStartWeight)}
+      />
+      <EditRow
+        label="Current weight"
+        value={fmtMass(bodyData.bw, massU)}
+        suffix={massLabel(massU)}
+        onCommit={commitMass(setBw)}
+      />
+      <EditRow
+        label="Goal weight"
+        value={fmtMass(bodyData.goalWeight, massU)}
+        suffix={massLabel(massU)}
+        onCommit={commitMass(setGoal)}
+      />
+      <EditRow
+        label="Height"
+        value={String(Math.round(heightCm))}
+        suffix="cm"
+        onCommit={commitHeight}
+      />
 
       <div className="srule" />
 

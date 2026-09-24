@@ -1,369 +1,261 @@
 "use client";
 
-// Train view - core workout logging. Ports legacy renderTrain (1679-1728),
-// exCard (1650-1678), setRow (1639-1649) and cueRow/cueList (1739-1745).
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+// Home dashboard - the app's landing page. A read-only overview that pulls live
+// from the store and links out to the working views (Train / Nutrition / Progress /
+// Library). Every card degrades to a friendly first-run prompt when its data is empty.
+import Link from "next/link";
 import { useStore } from "@/lib/store";
-import { useRest } from "@/lib/rest";
-import { todayISO } from "@/lib/dates";
-import { plannedForToday, dayExercises, logFor, exDone, activeDays } from "@/lib/day";
-import { lastEntry, exStats, type Logged } from "@/lib/exStats";
+import { todayISO, addDays, weekdayIndex } from "@/lib/dates";
+import { activeDays, plannedForToday, dayExercises, logFor, exDone } from "@/lib/day";
+import { dayTotals } from "@/lib/macros";
+import { streak } from "@/lib/streak";
+import { volumeWeeks } from "@/lib/progress";
+import { fmtMass, massToDisplay, massLabel, type MassUnit } from "@/lib/units";
 import { Ring } from "@/components/exercise/Ring";
-import { Thumb } from "@/components/exercise/Thumb";
+import { Sparkline } from "@/components/Sparkline";
 import { Chip } from "@/components/exercise/Chip";
 import { Icon } from "@/data/icons";
-import { WARMUP, COOLDOWN } from "@/data/cues";
-import { mc, withA } from "@/data/muscles";
-import { getEx } from "@/lib/exdb";
-import { massLabel, type MassUnit } from "@/lib/units";
-import { useExerciseModal } from "@/components/exercise/ExerciseModalProvider";
-import { usePicker } from "@/components/PickerProvider";
-import { useSwitch } from "@/components/SwitchProvider";
-import { useConfirm } from "@/components/ConfirmProvider";
-import type { PlanDay, PlanExercise } from "@/data/plan";
 
-/* ---- warm-up / cool-down cue row (legacy:1739-1745) ---- */
-function CueRow({ line }: { line: string }) {
-  const { openExercise } = useExerciseModal();
-  const name = line.split(/[-–-]|\(/)[0].trim();
-  const e = getEx(name);
-  const rest = line.slice(name.length);
-  return (
-    <div className="cue">
-      {e ? <Thumb ex={{ name, muscle: "" }} small /> : <span className="cuedot" />}
-      <div className="ct">
-        {e ? (
-          <>
-            <a role="button" tabIndex={0} onClick={() => openExercise(name)} style={{ cursor: "pointer" }}>
-              {name}
-            </a>
-            {rest}
-          </>
-        ) : (
-          line
-        )}
-      </div>
-    </div>
-  );
-}
-function CueList({ cues }: { cues: string[] }) {
-  return (
-    <div className="cues">
-      {cues.map((c) => (
-        <CueRow key={c} line={c} />
-      ))}
-    </div>
-  );
-}
+const shortDate = (iso: string) =>
+  new Date(iso + "T12:00:00Z").toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
 
-/* ---- single set row (legacy:1639-1649) ---- */
-function SetRow({
-  ex,
-  i,
-  date,
-  unit,
-  last,
-}: {
-  ex: PlanExercise;
-  i: number;
-  date: string;
-  unit: MassUnit;
-  last: ReturnType<typeof lastEntry>;
-}) {
+export default function DashboardPage() {
+  const profile = useStore((s) => s.profile);
+  const body = useStore((s) => s.body);
+  const sessions = useStore((s) => s.sessions);
+  const diary = useStore((s) => s.diary);
+  const goals = useStore((s) => s.goals);
   const logged = useStore((s) => s.logged);
-  const settings = useStore((s) => s.settings);
-  const setLoggedSet = useStore((s) => s.setLoggedSet);
-  const toggleSetDone = useStore((s) => s.toggleSetDone);
-  const delSet = useStore((s) => s.delSet);
-  const restStart = useRest((s) => s.start);
-
-  const s = logFor(logged, date, ex.name, ex.sets)[i];
-  if (!s) return null;
-  const lw = last && last[i] && last[i].w ? last[i].w : ex.start || "";
-  const lr = last && last[i] && last[i].r ? last[i].r : ex.reps;
-
-  return (
-    <div className={`setrow${s.done ? " done" : ""}`} data-row={i}>
-      <div className="sn">{i + 1}</div>
-      <input
-        className="cell"
-        inputMode="decimal"
-        value={s.w}
-        placeholder={String(lw || "–")}
-        aria-label={`weight ${massLabel(unit)}`}
-        onChange={(e) => setLoggedSet(date, ex.name, i, "w", e.target.value, ex.sets)}
-      />
-      <input
-        className="cell"
-        inputMode="numeric"
-        value={s.r}
-        placeholder={String(lr)}
-        aria-label="reps"
-        onChange={(e) => setLoggedSet(date, ex.name, i, "r", e.target.value, ex.sets)}
-      />
-      <button
-        className="tick"
-        aria-label="mark set done"
-        onClick={() => {
-          const willBeDone = !s.done;
-          toggleSetDone(date, ex.name, i, ex.sets);
-          if (willBeDone && settings.autoRest) restStart(settings.rest);
-        }}
-      >
-        <Icon name="check" />
-      </button>
-      <button className="setdel" aria-label="remove set" onClick={() => delSet(date, ex.name, i, ex.sets)}>
-        <Icon name="close" />
-      </button>
-    </div>
-  );
-}
-
-/* ---- collapsible exercise card (legacy:1650-1678) ---- */
-function ExCard({
-  ex,
-  date,
-  unit,
-  open,
-  onToggle,
-}: {
-  ex: PlanExercise;
-  date: string;
-  unit: MassUnit;
-  open: boolean;
-  onToggle: () => void;
-}) {
-  const logged = useStore((s) => s.logged);
-  const addSet = useStore((s) => s.addSet);
-
-  const arr = logFor(logged, date, ex.name, ex.sets);
-  const done = exDone(arr);
-  const ns = arr.length;
-  const last = lastEntry(logged as Logged, ex.name);
-  const st = exStats(logged as Logged, ex.name);
-
-  return (
-    <div className={`ex${open ? " open" : ""}${done === ns && ns ? " done-all" : ""}`} data-card={ex.name}>
-      <div className="head" onClick={onToggle}>
-        <Thumb ex={ex} how />
-        <div className="meta">
-          <div className="nm">{ex.name}</div>
-          <div className="sub">
-            <Chip muscle={ex.muscle} />
-            <span className="sr">
-              {ns} × {ex.reps}
-            </span>
-            {st && <span className="pr">PR {st.bestTxt}</span>}
-          </div>
-          <div className="prog">
-            {arr.map((s, i) => (
-              <i key={i} className={s.done ? "on" : ""} />
-            ))}
-          </div>
-        </div>
-        <span className="caret">
-          <Icon name="caret" />
-        </span>
-      </div>
-      {open && (
-        <div className="log">
-          <div className="colh">
-            <div>SET</div>
-            <div>{massLabel(unit).toUpperCase()}</div>
-            <div>REPS</div>
-            <div></div>
-            <div></div>
-          </div>
-          {arr.map((_, i) => (
-            <SetRow key={i} ex={ex} i={i} date={date} unit={unit} last={last} />
-          ))}
-          <button className="btn sm ghost addset" onClick={() => addSet(date, ex.name, ex.sets)}>
-            <Icon name="plus" />
-            &nbsp;Add set
-          </button>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default function TrainPage() {
-  const router = useRouter();
-  const logged = useStore((s) => s.logged);
-  const notes = useStore((s) => s.notes);
   const custom = useStore((s) => s.custom);
   const added = useStore((s) => s.added);
   const removed = useStore((s) => s.removed);
   const order = useStore((s) => s.order);
   const programs = useStore((s) => s.programs);
   const activeProgramId = useStore((s) => s.activeProgramId);
-  const profile = useStore((s) => s.profile);
-  const setNote = useStore((s) => s.setNote);
-  const finishSession = useStore((s) => s.finishSession);
-  const discardDay = useStore((s) => s.discardDay);
-  const { openPicker } = usePicker();
-  const { openSwitch } = useSwitch();
-  const confirm = useConfirm();
-
-  const [openCards, setOpenCards] = useState<Record<string, boolean>>({});
-  const toggleCard = (name: string) => setOpenCards((o) => ({ ...o, [name]: !o[name] }));
 
   const date = todayISO();
   const unit: MassUnit = profile?.units.mass ?? "kg";
-  const wd = new Date().toLocaleDateString("en-GB", { weekday: "long" });
-  // Today's plan comes from the active program's days (or PLAN as the SAFE FALLBACK);
-  // a per-date custom "switch workout" still overrides.
-  const days = activeDays({ programs, activeProgramId });
-  const plan: PlanDay | null = custom[date] || plannedForToday(new Date(), days);
-
-  /* ---- rest day / no plan ---- */
-  if (!plan) {
-    return (
-      <main>
-        <section className="panel today" style={{ ["--dayhue" as string]: withA(mc("Core"), 0.18) }}>
-          <div className="eyebrow upper">{wd} · Recovery</div>
-          <div className="dname" style={{ marginTop: 6 }}>
-            Rest Day
-          </div>
-          <div className="focus">
-            No lifting today. Walk, stretch, eat, sleep. Muscle is built while you recover.
-          </div>
-        </section>
-        <div style={{ margin: "14px 2px" }}>
-          <button className="btn ghost" style={{ width: "100%" }} onClick={openSwitch}>
-            + Start a workout anyway
-          </button>
-        </div>
-        <div className="section-h">
-          <h2>Mobility</h2>
-        </div>
-        <section className="panel" style={{ padding: "6px 16px" }}>
-          <CueList cues={COOLDOWN} />
-        </section>
-      </main>
-    );
-  }
-
-  /* ---- training day ---- */
-  const exs = dayExercises(plan, added, removed, order);
-  let total = 0;
-  let done = 0;
-  exs.forEach((e) => {
-    const a = logFor(logged, date, e.name, e.sets);
-    total += a.length;
-    done += exDone(a);
+  const firstName = (profile?.name || "").trim().split(/\s+/)[0] || "there";
+  const prettyToday = new Date(date + "T12:00:00Z").toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    timeZone: "UTC",
   });
-  const pct = total ? (done / total) * 100 : 0;
-  const first = exs[0] || plan.ex[0];
-  const hue = withA(mc(first ? first.muscle : "Chest"), 0.22);
 
-  const onFinish = () => {
-    finishSession(date, plan.name, exs);
-    router.push("/progress");
-  };
-  const onDiscard = async () => {
-    const ok = await confirm({
-      title: "Discard workout?",
-      message: "Today's logged sets for this workout will be cleared. This can't be undone.",
-      confirmLabel: "Discard",
-      danger: true,
-    });
-    if (ok) {
-      discardDay(date, exs.map((e) => e.name));
-      setOpenCards({});
+  // ---- Today's workout ----
+  const days = activeDays({ programs, activeProgramId });
+  const plan = custom[date] || plannedForToday(new Date(), days);
+  let wTotal = 0;
+  let wDone = 0;
+  if (plan) {
+    for (const e of dayExercises(plan, added, removed, order)) {
+      const a = logFor(logged, date, e.name, e.sets);
+      wTotal += a.length;
+      wDone += exDone(a);
     }
-  };
+  }
+  const wPct = wTotal ? (wDone / wTotal) * 100 : 0;
+  const started = wDone > 0;
+
+  // ---- Nutrition today ----
+  const totals = dayTotals(diary[date]?.meals ?? []);
+  const T = { kcal: goals.kcal, p: goals.p, c: goals.c, f: goals.f };
+  const kpct = T.kcal ? Math.min(100, Math.round((totals.kcal / T.kcal) * 100)) : 0;
+  const ateAnything = (diary[date]?.meals ?? []).some((m) => m.items.length > 0);
+
+  // ---- Bodyweight ----
+  const wHist = [...body.history].sort((a, b) => a.date.localeCompare(b.date));
+  const hasTrend = wHist.length >= 2;
+  const trendPts = wHist.slice(-30).map((p) => ({ kg: massToDisplay(p.kg, unit) }));
+  const strk = streak(sessions, date);
+
+  // ---- This week ----
+  const startOfWeek = addDays(date, -weekdayIndex(new Date(date + "T12:00:00")));
+  const weekSessions = sessions.filter((s) => s.date >= startOfWeek);
+  const weekVol = volumeWeeks(sessions, date).at(-1) ?? 0;
+
+  // ---- Recent activity ----
+  const recent = sessions.slice(0, 5);
 
   return (
     <main>
-      <section className="panel today" style={{ ["--dayhue" as string]: hue }}>
-        <div className="row1">
-          <div style={{ minWidth: 0 }}>
-            <div className="eyebrow upper">
-              {wd} · {plan.label}
-            </div>
-            <div className="dname cond">{plan.name}</div>
-            <div className="focus">{plan.focus}</div>
+      <div className="home-hi">
+        <div className="eyebrow upper">{prettyToday}</div>
+        <h1 className="home-greet cond">Hi {firstName}</h1>
+      </div>
+
+      <div className="dash">
+        {/* --- Today's workout --- */}
+        <div className="dashcard">
+          <div className="section-h">
+            <h2>Today&apos;s workout</h2>
+            <span className="sub">{plan ? (started ? "in progress" : "ready") : "rest day"}</span>
           </div>
-          <Ring pct={pct} />
+          <section className="panel home-card">
+            {plan ? (
+              <>
+                <div className="home-row">
+                  <div style={{ minWidth: 0 }}>
+                    <div className="home-title cond">{plan.name}</div>
+                    <div className="home-focus">{plan.focus}</div>
+                    <div className="home-meta">
+                      {wDone}/{wTotal} sets done
+                    </div>
+                  </div>
+                  <Ring pct={wPct} />
+                </div>
+                {plan.tags.length > 0 && (
+                  <div className="home-chips">
+                    {plan.tags.map((t) => (
+                      <Chip key={t} muscle={t} />
+                    ))}
+                  </div>
+                )}
+                <Link href="/train" className="btn primary home-cta">
+                  <Icon name="train" /> {started ? "Resume workout" : "Start workout"}
+                </Link>
+              </>
+            ) : (
+              <>
+                <div className="home-title cond">Rest day</div>
+                <div className="home-focus">
+                  No lifting scheduled. Walk, stretch, eat and sleep - muscle is built while you recover.
+                </div>
+                <Link href="/train" className="btn ghost home-cta">
+                  <Icon name="plus" /> Start a workout anyway
+                </Link>
+              </>
+            )}
+          </section>
         </div>
-        {plan.tags.length > 0 && (
-          <div className="chips">
-            {plan.tags.map((t) => (
-              <Chip key={t} muscle={t} />
-            ))}
+
+        {/* --- Nutrition today --- */}
+        <div className="dashcard">
+          <div className="section-h">
+            <h2>Nutrition</h2>
+            <span className="sub">today</span>
           </div>
-        )}
-        <button className="btn sm ghost" style={{ marginTop: 13 }} onClick={openSwitch}>
-          ⇄ Switch workout
-        </button>
-      </section>
+          <section className="panel home-card">
+            <div className="rollup" style={{ padding: 0, margin: 0 }}>
+              <Ring pct={kpct} />
+              <div className="rollup-macros">
+                <div className="rollup-kcal cond">
+                  <b>{totals.kcal}</b> <span>/ {T.kcal} kcal</span>
+                </div>
+                <MacroBar label="Protein" cls="p" val={totals.p} target={T.p} />
+                <MacroBar label="Carbs" cls="c" val={totals.c} target={T.c} />
+                <MacroBar label="Fat" cls="f" val={totals.f} target={T.f} />
+              </div>
+            </div>
+            {!ateAnything && <div className="home-focus" style={{ marginTop: 10 }}>Nothing logged yet today.</div>}
+            <Link href="/nutrition" className="btn ghost home-cta">
+              <Icon name="plus" /> Add food
+            </Link>
+          </section>
+        </div>
 
-      <div className="section-h">
-        <h2>Warm-up</h2>
-        <span className="sub">5–8 min</span>
-      </div>
-      <section className="panel" style={{ padding: "6px 16px" }}>
-        <CueList cues={WARMUP} />
-      </section>
+        {/* --- Bodyweight --- */}
+        <div className="dashcard">
+          <div className="section-h">
+            <h2>Bodyweight</h2>
+            {strk > 0 && (
+              <span className="sub">
+                <Icon name="flame" /> {strk}-day streak
+              </span>
+            )}
+          </div>
+          <section className="panel home-card">
+            <div className="home-row">
+              <div className="home-bw cond">
+                {fmtMass(body.bw, unit)}
+                <small> {massLabel(unit)}</small>
+              </div>
+              <div className="home-stat">
+                <b className="cond" style={{ color: strk ? "var(--gold)" : "var(--dim)" }}>{strk}</b>
+                <span>day streak</span>
+              </div>
+            </div>
+            {hasTrend ? (
+              <Sparkline pts={trendPts} />
+            ) : (
+              <div className="home-focus" style={{ marginTop: 6 }}>Log your weight over a few days to see your trend.</div>
+            )}
+            <Link href="/progress" className="btn ghost home-cta">
+              <Icon name="up" /> Log weight
+            </Link>
+          </section>
+        </div>
 
-      <div className="section-h">
-        <h2>Session</h2>
-        <span className="sub">
-          {done}/{total} sets
-        </span>
-      </div>
-      <div className="exlist">
-        {exs.length ? (
-          exs.map((e) => (
-            <ExCard
-              key={e.name}
-              ex={e}
-              date={date}
-              unit={unit}
-              open={!!openCards[e.name]}
-              onToggle={() => toggleCard(e.name)}
-            />
-          ))
-        ) : (
-          <div className="empty">No exercises yet - add some below to start logging.</div>
-        )}
-      </div>
-      <button className="btn ghost addex" style={{ width: "100%", marginTop: 10 }} onClick={() => openPicker(plan.id)}>
-        + Add exercise
-      </button>
+        {/* --- This week --- */}
+        <div className="dashcard">
+          <div className="section-h">
+            <h2>This week</h2>
+            <span className="sub">since Monday</span>
+          </div>
+          <section className="panel home-card">
+            <div className="stat">
+              <div className="macro">
+                <b className="cond">{weekSessions.length}</b>
+                <span>sessions</span>
+              </div>
+              <div className="macro">
+                <b className="cond">{Math.round(weekVol).toLocaleString()}</b>
+                <span>volume</span>
+              </div>
+            </div>
+            {weekSessions.length === 0 && (
+              <div className="home-focus" style={{ marginTop: 10 }}>No sessions logged this week yet.</div>
+            )}
+          </section>
+        </div>
 
-      <div className="section-h">
-        <h2>Notes</h2>
-        <span className="sub">today</span>
+        {/* --- Recent activity --- */}
+        <div className="dashcard wide">
+          <div className="section-h">
+            <h2>Recent activity</h2>
+            {recent.length > 0 && (
+              <Link href="/progress" className="sub" style={{ color: "var(--accent)" }}>
+                View all
+              </Link>
+            )}
+          </div>
+          <section className="panel" style={{ padding: "6px 16px" }}>
+            {recent.length ? (
+              recent.map((h) => (
+                <div className="histrow" key={h.id}>
+                  <div className="hd" style={{ color: "var(--accent)" }}>{shortDate(h.date)}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 14 }}>{h.name}</div>
+                    <div style={{ fontSize: 12, color: "var(--dim)" }}>
+                      {h.sets} sets{h.vol ? " · " + Math.round(h.vol).toLocaleString() + " vol" : ""}
+                    </div>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="empty sm">
+                Finish a workout to see it here. <Link href="/train" style={{ color: "var(--accent)" }}>Start training</Link>
+              </div>
+            )}
+          </section>
+        </div>
       </div>
-      <textarea
-        className="notes"
-        placeholder="How did it feel? Anything to remember next time…"
-        value={notes[date] || ""}
-        onChange={(e) => setNote(date, e.target.value)}
-      />
-
-      <div style={{ margin: "18px 2px", display: "flex", flexDirection: "column", gap: 8 }}>
-        <button className="btn primary" style={{ width: "100%" }} onClick={onFinish}>
-          Finish &amp; log session
-        </button>
-        <button
-          className="btn ghost"
-          style={{ width: "100%", color: "var(--danger)", borderColor: "var(--line2)" }}
-          onClick={onDiscard}
-        >
-          Discard today&apos;s sets
-        </button>
-      </div>
-
-      <div className="section-h">
-        <h2>Cooldown</h2>
-      </div>
-      <section className="panel" style={{ padding: "6px 16px" }}>
-        <CueList cues={COOLDOWN} />
-      </section>
     </main>
+  );
+}
+
+function MacroBar({ label, cls, val, target }: { label: string; cls: "p" | "c" | "f"; val: number; target: number }) {
+  const pct = target ? Math.min(100, Math.round((val / target) * 100)) : 0;
+  return (
+    <div className="macrobar">
+      <div className="macrobar-top">
+        <span className="macrobar-lbl">{label}</span>
+        <span className="macrobar-val cond">{val} / {target} g</span>
+      </div>
+      <div className="macrobar-track">
+        <i className={"macrobar-fill " + cls} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
   );
 }

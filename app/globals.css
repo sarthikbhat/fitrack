@@ -3738,3 +3738,100 @@ main .libgrid {
   color: var(--go);
   font-size: 13px;
 }
+
+/* ============================================================================
+   Home dashboard - landing overview. Reuses .dash/.dashcard grid, .panel, .btn,
+   .rollup/.macrobar, .stat/.macro, .histrow. Adds only home-specific helpers.
+   ============================================================================ */
+.home-hi {
+  margin: 4px 2px 6px;
+}
+.home-greet {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+.home-hi .eyebrow {
+  color: var(--dim);
+  letter-spacing: 0.04em;
+}
+/* A dashboard panel that lays its content in a column with a CTA pinned below. */
+.home-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+.home-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+.home-title {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.home-focus {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 3px;
+}
+.home-meta {
+  color: var(--dim);
+  font-size: 12px;
+  margin-top: 6px;
+  font-family: var(--font-geist-mono);
+}
+.home-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.home-cta {
+  width: 100%;
+  margin-top: auto;
+}
+.home-bw {
+  font-family: var(--font-geist-mono);
+  font-size: 36px;
+  font-weight: 700;
+  line-height: 1;
+}
+.home-bw small {
+  font-size: 16px;
+  color: var(--muted);
+}
+.home-stat {
+  text-align: right;
+}
+.home-stat b {
+  display: block;
+  font-family: var(--font-geist-mono);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+.home-stat span {
+  font-size: 10px;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 4px;
+  display: block;
+}
+.home-quick {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+.home-quick-btn {
+  width: 100%;
+}
+@media (min-width: 720px) {
+  .home-quick {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
