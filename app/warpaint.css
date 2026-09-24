@@ -4362,6 +4362,25 @@ main .libgrid {
   position: relative;
   display: inline-flex;
 }
+/* Sidebar (desktop) variant: full-width nav row; panel opens upward from the rail. */
+.notif-sidebar {
+  display: block;
+  width: 100%;
+}
+.notif-sidebar .notif-btn {
+  width: 100%;
+}
+.notif-sidebar .notif-badge {
+  position: static;
+  margin-left: auto;
+  box-shadow: none;
+}
+.notif-sidebar .notif-panel {
+  top: auto;
+  bottom: calc(100% + 8px);
+  right: auto;
+  left: 0;
+}
 .notif-btn {
   position: relative;
 }

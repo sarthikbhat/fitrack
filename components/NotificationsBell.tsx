@@ -27,7 +27,7 @@ function ago(iso: string | null): string {
   return `${Math.floor(d / 7)}w ago`;
 }
 
-export function NotificationsBell() {
+export function NotificationsBell({ variant = "header" }: { variant?: "header" | "sidebar" }) {
   const { user, status } = useAuth();
   const uid = user?.id ?? "";
   const [open, setOpen] = useState(false);
@@ -97,11 +97,23 @@ export function NotificationsBell() {
   };
 
   return (
-    <div className="notif" ref={wrapRef}>
-      <button className="gearbtn notif-btn" aria-label="Notifications" onClick={toggle}>
-        <Icon name="bell" />
-        {unread > 0 && <span className="notif-badge">{unread > 9 ? "9+" : unread}</span>}
-      </button>
+    <div className={`notif notif-${variant}`} ref={wrapRef}>
+      {variant === "sidebar" ? (
+        <button
+          className={`snav-item notif-btn${open ? " active" : ""}`}
+          aria-label="Notifications"
+          onClick={toggle}
+        >
+          <Icon name="bell" />
+          <span>Notifications</span>
+          {unread > 0 && <span className="notif-badge">{unread > 9 ? "9+" : unread}</span>}
+        </button>
+      ) : (
+        <button className="gearbtn notif-btn" aria-label="Notifications" onClick={toggle}>
+          <Icon name="bell" />
+          {unread > 0 && <span className="notif-badge">{unread > 9 ? "9+" : unread}</span>}
+        </button>
+      )}
       {open && (
         <div className="notif-panel" role="menu">
           <div className="notif-head">Notifications</div>

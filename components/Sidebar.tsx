@@ -6,6 +6,7 @@ import { NAV } from "@/lib/nav";
 import { useSettings } from "@/components/SettingsProvider";
 import { AccountControl } from "@/components/AccountControl";
 import { useAuth } from "@/lib/auth";
+import { NotificationsBell } from "@/components/NotificationsBell";
 
 // Desktop-only left rail. Hidden < 900px via CSS (.sidebar); the mobile BottomNav
 // covers the same routes. Purely CSS-toggled, so it renders on server + client alike.
@@ -35,6 +36,7 @@ export function Sidebar() {
         ))}
       </nav>
       <div className="snav-foot">
+        {status === "signed-in" && <NotificationsBell variant="sidebar" />}
         <Link
           href="/feed"
           className={`snav-item${path === "/feed" ? " active" : ""}`}
