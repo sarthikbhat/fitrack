@@ -18,13 +18,24 @@ import { SyncManager } from "@/components/SyncManager";
 import { ConfirmProvider } from "@/components/ConfirmProvider";
 import { Icon } from "@/data/icons";
 import { useStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
+import Link from "next/link";
 
 function HeaderBar() {
   const { openSettings } = useSettings();
+  const { status } = useAuth();
   return (
     <header className="top">
       <span className="brand">Fitrack</span>
       <div className="top-actions">
+        <Link href="/feed" className="gearbtn" aria-label="Feed">
+          <Icon name="feed" />
+        </Link>
+        {status === "signed-in" && (
+          <Link href="/people" className="gearbtn" aria-label="Find people">
+            <Icon name="people" />
+          </Link>
+        )}
         <NotificationsBell />
         <button className="gearbtn" aria-label="Settings" onClick={openSettings}>
           <Icon name="gear" />

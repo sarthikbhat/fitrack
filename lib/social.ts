@@ -81,6 +81,28 @@ export async function unfollowUser(followeeId: string): Promise<FollowResult> {
 }
 
 /**
+ * Remove one of your own followers: delete the (followerId → me) edge. Requires the
+ * 0006 policy (followee-delete). A no-op delete (they weren't following) is success.
+ */
+export async function removeFollower(followerId: string): Promise<FollowResult> {
+  const sb = getSupabase();
+  if (!sb) return { ok: false, error: SIGN_IN };
+  const uid = await currentUserId(sb);
+  if (!uid) return { ok: false, error: SIGN_IN };
+
+  const { error } = await sb
+    .from("follows")
+    .delete()
+    .eq("follower", followerId)
+    .eq("followee", uid);
+  if (error) {
+    if (error.code === "42P01") return { ok: false, error: MISSING_TABLE };
+    return { ok: false, error: "Couldn't remove follower. Try again." };
+  }
+  return { ok: true };
+}
+
+/**
  * Whether the signed-in user follows `followeeId`. Returns false when signed
  * out, unconfigured, or on any error (a safe default for the toggle's initial
  * state).

@@ -8,8 +8,9 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/data/icons";
 import { Avatar } from "@/components/Avatar";
+import { FollowButton } from "@/components/FollowButton";
 import { useAuth } from "@/lib/auth";
-import { getFollowers, followUser, type FollowerNotice } from "@/lib/social";
+import { getFollowers, type FollowerNotice } from "@/lib/social";
 import { getLastSeen, setLastSeen } from "@/lib/notifications";
 
 function ago(iso: string | null): string {
@@ -34,7 +35,6 @@ export function NotificationsBell({ variant = "header" }: { variant?: "header" |
   const [items, setItems] = useState<FollowerNotice[]>([]);
   const [loading, setLoading] = useState(true);
   const [seen, setSeen] = useState(0);
-  const [busy, setBusy] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   // Load followers once signed in. All setState happens inside the async closure.
@@ -87,14 +87,6 @@ export function NotificationsBell({ variant = "header" }: { variant?: "header" |
     }
   };
 
-  const followBack = async (id: string) => {
-    setBusy(id);
-    const res = await followUser(id);
-    setBusy(null);
-    if (res.ok) {
-      setItems((prev) => prev.map((f) => (f.id === id ? { ...f, youFollow: true } : f)));
-    }
-  };
 
   return (
     <div className={`notif notif-${variant}`} ref={wrapRef}>
@@ -142,16 +134,12 @@ export function NotificationsBell({ variant = "header" }: { variant?: "header" |
                         <span className="notif-time">{ago(f.createdAt)}</span>
                       </span>
                     </Link>
-                    {f.youFollow ? (
-                      <span className="notif-following">Following</span>
-                    ) : (
-                      <button
-                        className="btn primary notif-fb"
-                        disabled={busy === f.id}
-                        onClick={() => followBack(f.id)}
-                      >
-                        {busy === f.id ? "…" : "Follow back"}
-                      </button>
+                    {uid !== f.id && (
+                      <FollowButton
+                        targetId={f.id}
+                        initialFollowing={f.youFollow}
+                        size="sm"
+                      />
                     )}
                   </div>
                 );
