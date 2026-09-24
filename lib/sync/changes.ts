@@ -10,16 +10,24 @@ import { SYNC_TABLES, unitKey } from "@/lib/sync/registry";
 
 const SYNCMETA_KEY = "fitrack-syncmeta";
 
+// Bump when older persisted sync-meta must be discarded. v1 heals the "empty-baseline
+// clobber" bug: buggy builds stamped local units with a fresh `now` on cold start,
+// giving stale local data bogus-newer timestamps that beat the cloud under LWW. On
+// first load of the fixed code we drop any pre-v1 meta so the device re-bootstraps and
+// adopts the cloud copy instead of clobbering it.
+const SYNCMETA_VERSION = 1;
+
 /** Per-unit sync bookkeeping, keyed `${table}:${id}`. */
 export type UnitMeta = { updatedAt: number; deleted?: boolean };
 
 export type SyncMeta = {
   units: Record<string, UnitMeta>;
   lastSyncedAt: number;
+  v?: number;
 };
 
 export function emptySyncMeta(): SyncMeta {
-  return { units: {}, lastSyncedAt: 0 };
+  return { units: {}, lastSyncedAt: 0, v: SYNCMETA_VERSION };
 }
 
 // ---------------------------------------------------------------------------
@@ -99,8 +107,13 @@ let primed = false;
 export async function ensureSyncMetaLoaded(): Promise<SyncMeta> {
   if (loaded) return meta;
   const stored = (await idbGet(SYNCMETA_KEY)) as SyncMeta | undefined;
-  if (stored && typeof stored === "object") {
-    meta = { units: stored.units ?? {}, lastSyncedAt: stored.lastSyncedAt ?? 0 };
+  if (stored && typeof stored === "object" && stored.v === SYNCMETA_VERSION) {
+    meta = { units: stored.units ?? {}, lastSyncedAt: stored.lastSyncedAt ?? 0, v: stored.v };
+  } else {
+    // No meta, or pre-v1 (possibly clobber-corrupted) meta: start fresh so the next
+    // sync re-bootstraps and adopts the cloud instead of trusting bad local stamps.
+    meta = emptySyncMeta();
+    persist();
   }
   loaded = true;
   return meta;
