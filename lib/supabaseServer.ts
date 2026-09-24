@@ -6,10 +6,10 @@
 // callers degrade gracefully (the app runs fully local-first without a backend).
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
-const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const URL = process.env.SUPABASE_URL;
 const ANON =
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_PUBLISHABLE_KEY;
 
 /** Fresh anon client with no session persistence, or null when unconfigured. */
 export function getServerSupabase(): SupabaseClient | null {

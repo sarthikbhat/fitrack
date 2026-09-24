@@ -20,8 +20,8 @@ export async function GET(req: NextRequest) {
   const url = process.env.SUPABASE_URL;
   // Accept either the legacy anon key or Supabase's newer publishable key name.
   const anonKey =
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+    process.env.SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_PUBLISHABLE_KEY;
   if (!url || !anonKey) {
     return NextResponse.json(
       { ok: false, reason: "supabase not configured" },
