@@ -9,12 +9,12 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Avatar } from "@/components/Avatar";
 import { FollowButton } from "@/components/FollowButton";
-import { useAuth } from "@/lib/auth";
+import { useAuth, signInWithGoogle } from "@/lib/auth";
 import { searchProfiles } from "@/lib/social";
 import type { Profile } from "@/lib/profile";
 
 export default function PeoplePage() {
-  const { status } = useAuth();
+  const { status, loading: authLoading } = useAuth();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -46,8 +46,39 @@ export default function PeoplePage() {
     return () => clearTimeout(t);
   }, [query]);
 
-  const unconfigured = status === "unconfigured";
+  // --- unconfigured: no backend on this device ---
+  if (status === "unconfigured") {
+    return (
+      <main className="people-page">
+        <header className="people-head">
+          <h1 className="page-title">Find people</h1>
+        </header>
+        <p className="empty">Search isn&apos;t available on this device yet.</p>
+      </main>
+    );
+  }
 
+  // --- signed out: require sign-in before searching ---
+  if (status === "signed-out") {
+    return (
+      <main className="people-page">
+        <header className="people-head">
+          <h1 className="page-title">Find people</h1>
+        </header>
+        <section className="feed-signin panel">
+          <h2 className="feed-signin-title">Sign in to find people</h2>
+          <p className="feed-signin-sub">
+            Search athletes by name or @username and follow them. Sign in with Google to get started.
+          </p>
+          <button className="btn primary" disabled={authLoading} onClick={() => signInWithGoogle()}>
+            Sign in with Google
+          </button>
+        </section>
+      </main>
+    );
+  }
+
+  // --- signed in ---
   return (
     <main className="people-page">
       <header className="people-head">
@@ -55,59 +86,47 @@ export default function PeoplePage() {
         <p className="people-sub">Search athletes by name or @username and follow them.</p>
       </header>
 
-      {unconfigured ? (
-        <p className="empty">Search isn&apos;t available on this device yet.</p>
-      ) : (
-        <>
-          <input
-            className="search people-search"
-            type="search"
-            placeholder="Search by name or @username…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            autoFocus
-            aria-label="Search people"
-          />
+      <input
+        className="search people-search"
+        type="search"
+        placeholder="Search by name or @username…"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        autoFocus
+        aria-label="Search people"
+      />
 
-          {status === "signed-out" && (
-            <p className="people-note">
-              You can browse now — sign in when you want to follow someone.
-            </p>
-          )}
+      <div className="people-results">
+        {loading && <p className="empty">Searching…</p>}
 
-          <div className="people-results">
-            {loading && <p className="empty">Searching…</p>}
+        {!loading &&
+          results.map((p) => {
+            const name = p.display_name || p.username || "Athlete";
+            return (
+              <div key={p.id} className="people-row panel">
+                <Link
+                  href={p.username ? `/u/${p.username}` : "#"}
+                  className="people-ident"
+                >
+                  <Avatar src={p.avatar_url} name={name} size={44} />
+                  <span className="people-text">
+                    <span className="people-name">{name}</span>
+                    {p.username && <span className="people-handle">@{p.username}</span>}
+                  </span>
+                </Link>
+                <FollowButton targetId={p.id} size="sm" />
+              </div>
+            );
+          })}
 
-            {!loading &&
-              results.map((p) => {
-                const name = p.display_name || p.username || "Athlete";
-                return (
-                  <div key={p.id} className="people-row panel">
-                    <Link
-                      href={p.username ? `/u/${p.username}` : "#"}
-                      className="people-ident"
-                    >
-                      <Avatar src={p.avatar_url} name={name} size={44} />
-                      <span className="people-text">
-                        <span className="people-name">{name}</span>
-                        {p.username && <span className="people-handle">@{p.username}</span>}
-                      </span>
-                    </Link>
-                    <FollowButton targetId={p.id} size="sm" />
-                  </div>
-                );
-              })}
+        {!loading && searched && results.length === 0 && (
+          <p className="empty">No athletes match “{query.trim()}”.</p>
+        )}
 
-            {!loading && searched && results.length === 0 && (
-              <p className="empty">No athletes match “{query.trim()}”.</p>
-            )}
-
-            {!loading && !searched && (
-              <p className="empty">Start typing to find people to follow.</p>
-            )}
-          </div>
-        </>
-      )}
+        {!loading && !searched && (
+          <p className="empty">Start typing to find people to follow.</p>
+        )}
+      </div>
     </main>
   );
 }
