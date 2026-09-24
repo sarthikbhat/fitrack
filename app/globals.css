@@ -23,7 +23,7 @@
   --macro-f: #a855f7;
   --r: 12px;
   --rs: 8px;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 10px 30px -20px rgba(0, 0, 0, 0.7);
+  --shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset, 0 10px 28px -14px rgba(0, 0, 0, 0.7);
   --maxw: 820px;
   --nav-h: 66px;
 
@@ -52,7 +52,7 @@
   --macro-p: #2563eb;
   --macro-c: #d97706;
   --macro-f: #9333ea;
-  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 10px 30px -20px rgba(16, 24, 40, 0.28);
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px -12px rgba(16, 24, 40, 0.18);
 }
 :root[data-theme="light"] header.top {
   background: linear-gradient(180deg, rgba(247, 248, 250, 0.95), rgba(247, 248, 250, 0.65));
@@ -3248,14 +3248,28 @@ nav.tabs {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 4px 20px;
-    align-items: start;
+    /* stretch so paired cards in a row share the tallest height */
+    align-items: stretch;
   }
   .dash .dashcard.wide,
   .dash .dash-secondary {
     grid-column: 1 / -1;
   }
+  /* let each cell's card fill the stretched grid row */
+  .dash .dashcard {
+    display: flex;
+    flex-direction: column;
+  }
+  .dash .home-card {
+    flex: 1;
+  }
   .dash .dashcard .section-h {
     margin-top: 18px;
+  }
+  /* Home puts .section-h INSIDE the panel, so the 18px above must not apply -
+     the header sits flush at the top of the card (spacing comes from home-card gap). */
+  .dash .dashcard .home-card .section-h {
+    margin-top: 0;
   }
 
   /* --- Library: more cards per row, filter bar lays out horizontally --- */
@@ -3869,6 +3883,18 @@ main .libgrid {
   flex-direction: column;
   gap: 12px;
   padding: 16px;
+}
+/* The in-card header sits flush at the top; vertical rhythm comes from the
+   home-card gap, not section-h's own default margins. */
+.home-card .section-h {
+  margin: 0;
+}
+/* Keep every dashboard card a SINGLE panel: the "This week" stat tiles render as
+   plain figures, not bordered/filled boxes inside the already-bordered card. */
+.home-card .macro {
+  background: transparent;
+  border: none;
+  padding: 4px 2px;
 }
 .home-row {
   display: flex;
