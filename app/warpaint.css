@@ -2348,18 +2348,24 @@ nav.tabs {
 
 /* ---------- header gear button ---------- */
 .gearbtn {
-  margin-left: auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 38px;
   height: 38px;
+  flex-shrink: 0;
   border-radius: 10px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--muted);
   cursor: pointer;
   transition: color 0.18s, background 0.18s, border-color 0.18s;
+}
+/* Size every header icon consistently - the feed/people icons carry no inline
+   width/height, so without this they render at the wrong size (invisible). */
+.gearbtn svg {
+  width: 20px;
+  height: 20px;
 }
 .gearbtn:hover {
   color: var(--text);
