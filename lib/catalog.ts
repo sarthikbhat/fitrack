@@ -197,7 +197,9 @@ function build(): void {
         key,
         name: a.name,
         img: a.imageUrl || "",
-        muscles: dedupe([...a.targetMuscles, ...a.secondaryMuscles].map((m) => toMuscleGroup(m))),
+        // Primary (target) muscles only — secondary muscles would make e.g. a
+        // Triceps filter surface Bench Press (primary chest) and look wrong.
+        muscles: dedupe(a.targetMuscles.map((m) => toMuscleGroup(m))),
         equipment: dedupe(a.equipments.map(normEquip)),
         edbId: a.exerciseId,
         hasVideo: true,
