@@ -28,7 +28,7 @@ export type FollowResult = { ok: true } | { ok: false; error: string };
 export type FollowCounts = { followers: number; following: number };
 
 const MISSING_TABLE =
-  "Follows table missing — run the 0004 SQL migration.";
+  "Follows table missing - run the 0004 SQL migration.";
 const SIGN_IN = "Sign in to follow people.";
 
 /** The signed-in user's id, or null (signed-out / unconfigured). */

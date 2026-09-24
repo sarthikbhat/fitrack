@@ -174,7 +174,7 @@ export async function updateMyProfile(input: UpdateProfileInput): Promise<Update
   if (error) {
     if (isUniqueViolation(error)) return { ok: false, error: "That username is taken." };
     if (error.code === "42P01")
-      return { ok: false, error: "Profiles table missing — run the 0002 SQL migration in Supabase." };
+      return { ok: false, error: "Profiles table missing - run the 0002 SQL migration in Supabase." };
     return { ok: false, error: "Couldn't save your profile. Try again." };
   }
   return { ok: true, profile: data as Profile };

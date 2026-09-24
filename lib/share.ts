@@ -74,7 +74,7 @@ export async function createShare(input: CreateShareInput): Promise<CreateShareR
 
   if (error) {
     if (error.code === "42P01")
-      return { ok: false, error: "Shared plans table missing — run the 0003 SQL migration." };
+      return { ok: false, error: "Shared plans table missing - run the 0003 SQL migration." };
     return { ok: false, error: "Couldn't create the share link. Try again." };
   }
 

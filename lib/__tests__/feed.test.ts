@@ -4,32 +4,32 @@ import { sessionActivityText, summariseInteractions } from "@/lib/feed";
 describe("sessionActivityText", () => {
   test("formats a normal session with name, sets, and volume", () => {
     expect(sessionActivityText({ name: "Push A", sets: 12, vol: 4200 })).toBe(
-      "finished “Push A” — 12 sets · 4,200 vol",
+      "finished “Push A” - 12 sets · 4,200 vol",
     );
   });
 
   test("uses a singular 'set' label for one set", () => {
     expect(sessionActivityText({ name: "Quick", sets: 1, vol: 100 })).toBe(
-      "finished “Quick” — 1 set · 100 vol",
+      "finished “Quick” - 1 set · 100 vol",
     );
   });
 
   test("drops the volume clause when volume is zero (bodyweight / unlogged)", () => {
     expect(sessionActivityText({ name: "Mobility", sets: 5, vol: 0 })).toBe(
-      "finished “Mobility” — 5 sets",
+      "finished “Mobility” - 5 sets",
     );
   });
 
   test("falls back to 'Workout' and 0 sets on missing / blank data", () => {
-    expect(sessionActivityText({})).toBe("finished “Workout” — 0 sets");
+    expect(sessionActivityText({})).toBe("finished “Workout” - 0 sets");
     expect(sessionActivityText({ name: "  ", sets: NaN as unknown as number })).toBe(
-      "finished “Workout” — 0 sets",
+      "finished “Workout” - 0 sets",
     );
   });
 
   test("rounds fractional sets/volume and thousands-separates volume", () => {
     expect(sessionActivityText({ name: "Legs", sets: 8.6, vol: 12345.7 })).toBe(
-      "finished “Legs” — 9 sets · 12,346 vol",
+      "finished “Legs” - 9 sets · 12,346 vol",
     );
   });
 });

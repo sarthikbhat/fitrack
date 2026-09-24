@@ -46,7 +46,7 @@ export function ShareButton({
     const ok = await confirm({
       title: wantsSignIn ? "Sign in to share" : "Couldn't share",
       message: wantsSignIn
-        ? `${res.error} Your link is public — anyone with it can view and clone this plan.`
+        ? `${res.error} Your link is public - anyone with it can view and clone this plan.`
         : res.error,
       confirmLabel: wantsSignIn ? "Sign in" : "OK",
       cancelLabel: wantsSignIn ? "Cancel" : "Close",
@@ -75,7 +75,7 @@ export function ShareButton({
       {url && (
         <Sheet
           title="Share this plan"
-          hint="Anyone with this link can view it — no account needed."
+          hint="Anyone with this link can view it - no account needed."
           onClose={() => setUrl(null)}
         >
           <div className="sharelink">

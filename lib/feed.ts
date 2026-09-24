@@ -57,7 +57,7 @@ export type PostResult = { ok: true; id: string } | { ok: false; error: string }
 export type CommentResult = { ok: true; comment: FeedComment } | { ok: false; error: string };
 export type SimpleResult = { ok: true } | { ok: false; error: string };
 
-const MISSING_TABLE = "Activity table missing — run the 0005 SQL migration.";
+const MISSING_TABLE = "Activity table missing - run the 0005 SQL migration.";
 const SIGN_IN = "Sign in to share your workouts.";
 const COMMENT_SIGN_IN = "Sign in to comment.";
 
@@ -65,7 +65,7 @@ const COMMENT_SIGN_IN = "Sign in to comment.";
 
 /**
  * Human sentence for a finished-workout post, e.g.
- *   finished "Push A" — 12 sets · 4,200 vol
+ *   finished "Push A" - 12 sets · 4,200 vol
  * Volume is dropped when zero (bodyweight / unlogged), and the sets label is
  * singular for one set. Pure + testable (no volume unit here - matches Progress).
  */
@@ -75,7 +75,7 @@ export function sessionActivityText(data: Partial<SessionActivityData>): string 
   const vol = Math.max(0, Math.round(Number(data.vol) || 0));
   const setsLabel = `${sets} ${sets === 1 ? "set" : "sets"}`;
   const volLabel = vol ? ` · ${vol.toLocaleString()} vol` : "";
-  return `finished “${name}” — ${setsLabel}${volLabel}`;
+  return `finished “${name}” - ${setsLabel}${volLabel}`;
 }
 
 /** Tally like/comment rows by activity id, and note which activities I liked. */
