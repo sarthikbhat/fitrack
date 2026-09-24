@@ -38,6 +38,10 @@ export const IC: Record<string, string> = {
     '<svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor" stroke="none"><path d="M23 12s0-3.3-.42-4.9a2.5 2.5 0 0 0-1.77-1.77C19.2 5 12 5 12 5s-7.2 0-8.81.33A2.5 2.5 0 0 0 1.42 7.1C1 8.7 1 12 1 12s0 3.3.42 4.9a2.5 2.5 0 0 0 1.77 1.77C4.8 19 12 19 12 19s7.2 0 8.81-.33a2.5 2.5 0 0 0 1.77-1.77C23 15.3 23 12 23 12zM10 15.5v-7l6 3.5-6 3.5z"/></svg>',
   dumbbell:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 7.5v9M3.5 9.5v5M17.5 7.5v9M20.5 9.5v5M6.5 12h11"/></svg>',
+  share:
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 10.5 15.4 6.5M8.6 13.5l6.8 4"/></svg>',
+  link:
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"/></svg>',
 };
 
 export function Icon({ name, className }: { name: keyof typeof IC | string; className?: string }) {

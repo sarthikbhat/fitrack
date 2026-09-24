@@ -15,6 +15,7 @@ import { Ring } from "@/components/exercise/Ring";
 import { Icon } from "@/data/icons";
 import { AddFoodSheet } from "@/components/nutrition/AddFoodSheet";
 import { useConfirm } from "@/components/ConfirmProvider";
+import { ShareButton } from "@/components/ShareButton";
 
 // The add-food sheet targets a meal without writing to the store up-front: the
 // LoggedMeal is only created on the first actual add (see onAdd), so opening the
@@ -109,9 +110,16 @@ export default function NutritionPage() {
     <main>
       <div className="section-h">
         <h2>Nutrition</h2>
-        <button className="btn sm ghost" onClick={() => setEditingPlan((e) => !e)}>
-          {editingPlan ? "Done" : "Edit plan"}
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <ShareButton
+            kind="nutrition"
+            label="Share plan"
+            getPayload={() => ({ title: "My meal plan", data: plan })}
+          />
+          <button className="btn sm ghost" onClick={() => setEditingPlan((e) => !e)}>
+            {editingPlan ? "Done" : "Edit plan"}
+          </button>
+        </div>
       </div>
 
       <div className="datebar">

@@ -1,5 +1,6 @@
 "use client";
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
 import { BottomNav } from "@/components/BottomNav";
 import { Sidebar } from "@/components/Sidebar";
 import { ThemeSync } from "@/components/ThemeSync";
@@ -63,6 +64,23 @@ function Gate({ children }: { children: ReactNode }) {
 }
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
+  // Public shared-plan pages (/p/<code>) are standalone: they render their own
+  // header + content server-side and must show for logged-out, data-less visitors.
+  // Bypass HydrationGate (so the SSR content paints immediately) and the onboarding
+  // Gate (so a brand-new visitor sees the shared plan, not the onboarding wizard).
+  // ThemeSync + ConfirmProvider stay so the page respects theme and the clone flow
+  // can use the confirm dialog; both no-op gracefully before the store hydrates.
+  if (pathname?.startsWith("/p/")) {
+    return (
+      <>
+        <ThemeSync />
+        <ConfirmProvider>{children}</ConfirmProvider>
+      </>
+    );
+  }
+
   return (
     <HydrationGate>
       <ThemeSync />

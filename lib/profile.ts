@@ -181,6 +181,22 @@ export async function updateMyProfile(input: UpdateProfileInput): Promise<Update
 }
 
 /**
+ * Look up a profile by user id (public read). Works from a server component: pass
+ * a server client, or omit it to use the browser client. Used to resolve owner
+ * attribution on the public shared-plan page. Returns null when unconfigured /
+ * not found.
+ */
+export async function getProfileById(
+  id: string,
+  client?: SupabaseClient | null,
+): Promise<Profile | null> {
+  const sb = client ?? getSupabase();
+  if (!sb || !id) return null;
+  const { data } = await sb.from("profiles").select("*").eq("id", id).maybeSingle();
+  return (data as Profile) ?? null;
+}
+
+/**
  * Look up a profile by username (public read). Works from a server component:
  * pass a server client, or omit it to use the browser client. Returns null when
  * unconfigured or not found.

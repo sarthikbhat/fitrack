@@ -17,6 +17,8 @@ import { useExerciseModal } from "@/components/exercise/ExerciseModalProvider";
 import { usePicker } from "@/components/PickerProvider";
 import { Sheet } from "@/components/Sheet";
 import { useConfirm, usePrompt } from "@/components/ConfirmProvider";
+import { ShareButton } from "@/components/ShareButton";
+import { now } from "@/lib/ids";
 import { Icon } from "@/data/icons";
 
 function MiniEx({ ex, dayId }: { ex: PlanExercise; dayId: string }) {
@@ -268,10 +270,19 @@ export default function ProgramPage() {
           <div className="dname cond">{title}</div>
           <div className="fc">{active ? "Your program" : "Built-in - save it to customize"}</div>
         </div>
-        <button className="btn sm ghost" onClick={() => setSheetOpen(true)}>
-          <Icon name="program" />
-          &nbsp;Switch
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <ShareButton
+            kind="program"
+            getPayload={() => ({
+              title,
+              data: active ?? { id: "default", name: title, days, updatedAt: now() },
+            })}
+          />
+          <button className="btn sm ghost" onClick={() => setSheetOpen(true)}>
+            <Icon name="program" />
+            &nbsp;Switch
+          </button>
+        </div>
       </section>
 
       <div className="days" style={{ marginTop: 14 }}>

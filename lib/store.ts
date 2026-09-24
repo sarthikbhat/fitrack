@@ -10,6 +10,7 @@ import type {
   LogEntry,
   LoggedMeal,
   MealItem,
+  Plan,
   Profile,
   Program,
   State,
@@ -24,6 +25,7 @@ import { makeId, now } from "@/lib/ids";
 import { calcTargets } from "@/lib/targets";
 import { CURRENT_VERSION, defaultProfile, emptyState, migrate } from "@/lib/migrate";
 import { parseImport } from "@/lib/validate";
+import { cloneProgramForImport, clonePlanForImport } from "@/lib/share";
 import { idbStorage } from "@/lib/db";
 import { getSyncMeta, setLastSyncedAt, type SyncMeta } from "@/lib/sync/changes";
 import {
@@ -142,6 +144,11 @@ export type Store = State & {
   renameProgram: (id: string, name: string) => void;
   deleteProgram: (id: string) => void;
   setActiveProgram: (id: string) => void;
+  // ---- import shared plans (clone a plan opened from a /p/<code> link) ----
+  // Both work fully signed-out (pure local writes); the sync engine picks up the
+  // change automatically when signed in. Excluded from partialize (they're actions).
+  importProgram: (program: Program) => string; // clone under a fresh id, set active
+  importPlan: (plan: Plan) => void; // replace the recurring nutrition plan
   // Switch-workout sheet (per-date custom day; legacy pickWorkout 2181-2187).
   setCustomDay: (date: string, day: PlanDay) => void;
   startFreestyle: (date: string) => void;
@@ -334,6 +341,16 @@ export const useStore = create<Store>()(
         }),
       setActiveProgram: (id) =>
         set((s) => (s.programs[id] ? { activeProgramId: id } : {})),
+      // ---- import shared plans ----
+      importProgram: (program) => {
+        const id = makeId();
+        set((s) => {
+          const prog = cloneProgramForImport(program, id, now());
+          return { programs: { ...s.programs, [id]: prog }, activeProgramId: id };
+        });
+        return id;
+      },
+      importPlan: (plan) => set(() => ({ plan: clonePlanForImport(plan, makeId) })),
       setCustomDay: (date, day) =>
         set((s) => {
           const cid = customDayId(date);
@@ -651,6 +668,8 @@ export const useStore = create<Store>()(
           renameProgram: _rp,
           deleteProgram: _dp,
           setActiveProgram: _sap,
+          importProgram: _ip,
+          importPlan: _ipl,
           setCustomDay: _scd,
           startFreestyle: _sf,
           clearCustomDay: _ccd,
