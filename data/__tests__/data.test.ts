@@ -18,7 +18,7 @@ test("LIBRARY dedupes and is non-empty", () => {
   expect(LIBRARY.length).toBeGreaterThan(20);
 });
 
-const NEW_TEMPLATE_IDS = ["anta3", "bro5", "arnold6", "phul4", "phat5"];
+const NEW_TEMPLATE_IDS = ["anta6", "bro5", "arnold6", "phul4", "phat5"];
 const VALID_MUSCLES = new Set(MG_ORDER);
 
 test("every template is structurally valid", () => {
@@ -61,9 +61,9 @@ test("new template exercises reuse the exercise library", () => {
 });
 
 test("Antagonist split has a Core exercise on every day", () => {
-  const anta = templateById("anta3");
+  const anta = templateById("anta6");
   expect(anta).toBeDefined();
-  expect(anta!.days).toHaveLength(3);
+  expect(anta!.days).toHaveLength(6);
   for (const d of anta!.days) {
     expect(d.ex.some((e) => e.muscle === "Core"), `${d.name} should have core work`).toBe(true);
     expect(d.tags).toContain("Core");

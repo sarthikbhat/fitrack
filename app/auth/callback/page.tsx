@@ -7,10 +7,15 @@
 // unconfigured or something goes wrong, we still redirect home (no dead end).
 import { useEffect } from "react";
 import { getSupabase } from "@/lib/supabase";
+import { setAuthPending } from "@/lib/authPending";
 
 export default function AuthCallbackPage() {
   useEffect(() => {
     const sb = getSupabase();
+    // Show the global sign-in overlay (backdrop + spinner) instead of a blank
+    // flash while supabase finalizes the session. The destination's useAuth
+    // clears it once the session resolves.
+    setAuthPending(true, "Signing you in…");
     const home = () => window.location.replace("/");
     if (!sb) {
       home();

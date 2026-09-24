@@ -209,13 +209,13 @@ export function AddFoodSheet({
             <button className="stepbtn" onClick={() => setQty((n) => Math.round((n + step(unit)) * 100) / 100)} aria-label="more">+</button>
           </div>
           <select className="cell unitsel" value={unit} onChange={(e) => setUnit(e.target.value)}>
-            {units.map((u) => <option key={u} value={u}>{u}</option>)}
+            {units.map((u) => <option key={u} value={u}>{unitLabel(u, base)}</option>)}
           </select>
         </div>
 
         <div className="preview">
           <div className="preview-line">
-            <b className="cond">{fmt(grams)} {picked.base}</b>
+            <b className="cond">{fmt(grams)} {unitLabel(picked.base, picked.base)}</b>
             <span className="preview-kcal cond">{m.kcal} kcal</span>
           </div>
           <div className="propbar" role="img" aria-label={`${m.p}g protein, ${m.c}g carbs, ${m.f}g fat`}>
@@ -224,9 +224,9 @@ export function AddFoodSheet({
             <i style={{ width: `${(fk / tot) * 100}%`, background: "var(--macro-f)" }} />
           </div>
           <div className="chips">
-            <span className="mchip p">{m.p} P</span>
-            <span className="mchip c">{m.c} C</span>
-            <span className="mchip f">{m.f} F</span>
+            <span className="mchip p">Protein {m.p}g</span>
+            <span className="mchip c">Carbs {m.c}g</span>
+            <span className="mchip f">Fat {m.f}g</span>
           </div>
         </div>
 
@@ -312,4 +312,13 @@ function step(unit: string): number {
 }
 function fmt(n: number): string {
   return Number.isInteger(n) ? String(n) : n.toFixed(1);
+}
+// Friendlier display for the base units; serving labels pass through unchanged.
+// The VALUE stays g/ml/serving-label (macro math depends on it) — this is display only.
+function unitLabel(u: string, base: string): string {
+  if (u === base) {
+    if (base === "g") return "grams";
+    if (base === "ml") return "millilitres";
+  }
+  return u;
 }

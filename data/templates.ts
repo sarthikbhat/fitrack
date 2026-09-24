@@ -159,12 +159,12 @@ const ppl3: PlanDay[] = [
   },
 ];
 
-const antagonist3: PlanDay[] = [
+const antagonist6: PlanDay[] = [
   {
     id: "anta-d1",
     label: "Day 1",
-    name: "Chest & Triceps",
-    focus: "Push antagonists + core",
+    name: "Chest & Triceps A",
+    focus: "Push antagonists — strength + core",
     tags: ["Chest", "Arms", "Core"],
     ex: [
       { name: "Barbell Bench Press", muscle: "Chest", sets: 4, reps: "6–8", start: 35 },
@@ -178,8 +178,8 @@ const antagonist3: PlanDay[] = [
   {
     id: "anta-d2",
     label: "Day 2",
-    name: "Back & Biceps",
-    focus: "Pull antagonists + core",
+    name: "Back & Biceps A",
+    focus: "Pull antagonists — strength + core",
     tags: ["Back", "Arms", "Core"],
     ex: [
       { name: "Deadlift", muscle: "Back", sets: 3, reps: "5", start: 60 },
@@ -193,8 +193,8 @@ const antagonist3: PlanDay[] = [
   {
     id: "anta-d3",
     label: "Day 3",
-    name: "Shoulders & Legs",
-    focus: "Overhead + lower body + core",
+    name: "Shoulders & Legs A",
+    focus: "Overhead + lower body — strength + core",
     tags: ["Shoulders", "Legs", "Core"],
     ex: [
       { name: "Standing Overhead Press", muscle: "Shoulders", sets: 4, reps: "6–8", start: 25 },
@@ -203,6 +203,51 @@ const antagonist3: PlanDay[] = [
       { name: "Romanian Deadlift", muscle: "Legs", sets: 3, reps: "8–10", start: 40 },
       { name: "Standing Calf Raise", muscle: "Legs", sets: 4, reps: "12–15", start: 40 },
       { name: "Cable Crunch", muscle: "Core", sets: 3, reps: "12–15", start: 20 },
+    ],
+  },
+  {
+    id: "anta-d4",
+    label: "Day 4",
+    name: "Chest & Triceps B",
+    focus: "Push antagonists — hypertrophy + core",
+    tags: ["Chest", "Arms", "Core"],
+    ex: [
+      { name: "Barbell Bench Press", muscle: "Chest", sets: 3, reps: "10–12", start: 35 },
+      { name: "Incline Dumbbell Press", muscle: "Chest", sets: 3, reps: "12–15", start: 14 },
+      { name: "Close-Grip Bench Press", muscle: "Arms", sets: 3, reps: "12–15", start: 30 },
+      { name: "Skull Crusher", muscle: "Arms", sets: 3, reps: "15", start: 20 },
+      { name: "Rope Pushdown", muscle: "Arms", sets: 3, reps: "15–20", start: 20 },
+      { name: "Plank (log seconds)", muscle: "Core", sets: 3, reps: "45s", start: 0 },
+    ],
+  },
+  {
+    id: "anta-d5",
+    label: "Day 5",
+    name: "Back & Biceps B",
+    focus: "Pull antagonists — hypertrophy + core",
+    tags: ["Back", "Arms", "Core"],
+    ex: [
+      { name: "Deadlift", muscle: "Back", sets: 3, reps: "8–10", start: 60 },
+      { name: "Lat Pulldown", muscle: "Back", sets: 3, reps: "12–15", start: 40 },
+      { name: "Barbell Row", muscle: "Back", sets: 3, reps: "12–15", start: 35 },
+      { name: "Barbell Curl", muscle: "Arms", sets: 3, reps: "15", start: 20 },
+      { name: "Hammer Curl", muscle: "Arms", sets: 3, reps: "15", start: 10 },
+      { name: "Hanging Leg Raise", muscle: "Core", sets: 3, reps: "15", start: 0 },
+    ],
+  },
+  {
+    id: "anta-d6",
+    label: "Day 6",
+    name: "Shoulders & Legs B",
+    focus: "Overhead + lower body — hypertrophy + core",
+    tags: ["Shoulders", "Legs", "Core"],
+    ex: [
+      { name: "Standing Overhead Press", muscle: "Shoulders", sets: 3, reps: "10–12", start: 25 },
+      { name: "Lateral Raise", muscle: "Shoulders", sets: 3, reps: "15–20", start: 6 },
+      { name: "Back Squat", muscle: "Legs", sets: 3, reps: "12–15", start: 40 },
+      { name: "Romanian Deadlift", muscle: "Legs", sets: 3, reps: "12–15", start: 40 },
+      { name: "Standing Calf Raise", muscle: "Legs", sets: 4, reps: "15–20", start: 40 },
+      { name: "Cable Crunch", muscle: "Core", sets: 3, reps: "15–20", start: 20 },
     ],
   },
 ];
@@ -535,10 +580,10 @@ export const TEMPLATES: ProgramTemplate[] = [
     days: ppl3,
   },
   {
-    id: "anta3",
-    name: "3-Day Antagonist Split",
-    description: "Chest+triceps, back+biceps, shoulders+legs — opposing muscles paired, with a core finisher each day.",
-    days: antagonist3,
+    id: "anta6",
+    name: "6-Day Antagonist Split",
+    description: "Chest+triceps, back+biceps, shoulders+legs — each pairing trained twice a week (a strength day and a hypertrophy day), with a core finisher every day.",
+    days: antagonist6,
   },
   {
     id: "bro5",

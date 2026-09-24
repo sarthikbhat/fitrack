@@ -8,6 +8,7 @@ import type { User } from "@supabase/supabase-js";
 import { getSupabase, isSupabaseConfigured } from "@/lib/supabase";
 import { ensureProfile } from "@/lib/profile";
 import { useStore } from "@/lib/store";
+import { setAuthPending } from "@/lib/authPending";
 
 export type AuthStatus = "signed-in" | "signed-out" | "unconfigured";
 
@@ -17,7 +18,12 @@ export async function signInWithGoogle(): Promise<void> {
   if (!sb) return;
   const redirectTo =
     typeof window !== "undefined" ? `${window.location.origin}/auth/callback` : undefined;
-  await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
+  // Flash the overlay during the brief moment before the browser navigates away
+  // to Google, so the pending page doesn't reload out from under a blank screen.
+  setAuthPending(true, "Redirecting to Google…");
+  const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo } });
+  // If the redirect never starts (error), don't leave the overlay stuck.
+  if (error) setAuthPending(false);
 }
 
 /** End the session. Local IndexedDB data is untouched; only userId reverts. */
@@ -70,6 +76,8 @@ export function useAuth(): AuthState {
       setUserId(u ? u.id : "local");
       setLoading(false);
       provision(u);
+      // Auth resolved on the destination — clear any sign-in overlay.
+      setAuthPending(false);
     });
 
     const { data: sub } = sb.auth.onAuthStateChange((_event, session) => {
@@ -78,6 +86,8 @@ export function useAuth(): AuthState {
       setUserId(u ? u.id : "local");
       if (!u) ensuredFor.current = null; // reset on sign-out
       provision(u);
+      // Any definitive auth event clears the pending overlay.
+      setAuthPending(false);
     });
 
     return () => {

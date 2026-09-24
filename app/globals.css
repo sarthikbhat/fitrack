@@ -3532,3 +3532,41 @@ main .libgrid {
     height: 38px;
   }
 }
+
+/* Add-food portion picker: stepper (− value +) + unit dropdown */
+.portion {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  margin-bottom: 12px;
+}
+.stepper {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 6px;
+  flex: none;
+}
+.stepbtn {
+  width: 42px;
+  min-width: 42px;
+  border: 1px solid var(--line2);
+  background: var(--panel2);
+  color: var(--text);
+  border-radius: 8px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.stepbtn:hover {
+  border-color: var(--accent);
+}
+.stepper .stepval {
+  width: 66px;
+  min-width: 66px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.unitsel {
+  flex: 1;
+  min-width: 0;
+}

@@ -198,7 +198,7 @@ function LoggedMealCard({
         ) : (
           <span className="upper">{meal.name}</span>
         )}
-        <span className="cond mealgroup-kcal">{sub.kcal} kcal · {sub.p}g P</span>
+        <span className="cond mealgroup-kcal">{sub.kcal} kcal · {sub.p}g protein</span>
       </div>
 
       {meal.items.map((it) => (
@@ -209,9 +209,9 @@ function LoggedMealCard({
           </div>
           <div className="diaryrow-macros cond">
             <span className="diaryrow-kcal">{it.kcal} kcal</span>
-            <span className="mchip p">{it.p}P</span>
-            <span className="mchip c">{it.c}C</span>
-            <span className="mchip f">{it.f}F</span>
+            <span className="mchip p">Protein {it.p}g</span>
+            <span className="mchip c">Carbs {it.c}g</span>
+            <span className="mchip f">Fat {it.f}g</span>
           </div>
           <button className="delbtn" onClick={() => onRemoveItem(it.id)} aria-label="remove item">
             <Icon name="trash" />
@@ -243,7 +243,7 @@ function PlanPlaceholder({
     <section className="panel mealgroup planned">
       <div className="mealgroup-h">
         <span className="upper">{meal.name} <span className="planned-tag">planned</span></span>
-        {meal.items.length > 0 && <span className="cond mealgroup-kcal">{sub.kcal} kcal · {sub.p}g P</span>}
+        {meal.items.length > 0 && <span className="cond mealgroup-kcal">{sub.kcal} kcal · {sub.p}g protein</span>}
       </div>
       {meal.items.length > 0 ? (
         <div className="planned-items">{meal.items.map((it) => it.name).join(", ")}</div>
@@ -286,7 +286,7 @@ function PlanEditor({ onAddFood }: { onAddFood: (m: PlannedMeal) => void }) {
                 aria-label="plan meal name"
                 onBlur={(e) => renamePlanMeal(pm.id, e.target.value)}
               />
-              <span className="cond mealgroup-kcal">{sub.kcal} kcal · {sub.p}g P</span>
+              <span className="cond mealgroup-kcal">{sub.kcal} kcal · {sub.p}g protein</span>
             </div>
             {pm.items.map((it) => (
               <div className="diaryrow" key={it.id}>
@@ -296,7 +296,7 @@ function PlanEditor({ onAddFood }: { onAddFood: (m: PlannedMeal) => void }) {
                 </div>
                 <div className="diaryrow-macros cond">
                   <span className="diaryrow-kcal">{it.kcal} kcal</span>
-                  <span className="mchip p">{it.p}P</span>
+                  <span className="mchip p">Protein {it.p}g</span>
                 </div>
                 <button className="delbtn" onClick={() => removePlanItem(pm.id, it.id)} aria-label="remove food">
                   <Icon name="trash" />

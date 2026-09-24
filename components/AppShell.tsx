@@ -4,6 +4,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Sidebar } from "@/components/Sidebar";
 import { ThemeSync } from "@/components/ThemeSync";
 import { HydrationGate } from "@/components/HydrationGate";
+import { AuthOverlay } from "@/components/AuthOverlay";
 import { ExerciseModalProvider } from "@/components/exercise/ExerciseModalProvider";
 import { PickerProvider } from "@/components/PickerProvider";
 import { SwitchProvider } from "@/components/SwitchProvider";
@@ -64,6 +65,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   return (
     <HydrationGate>
       <ThemeSync />
+      <AuthOverlay />
       <Gate>{children}</Gate>
     </HydrationGate>
   );
